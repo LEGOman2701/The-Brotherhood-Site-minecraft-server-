@@ -1,16 +1,73 @@
-import { Switch, Route } from "wouter";
+import { Switch, Route, Redirect } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { ThemeProvider } from "@/components/theme-provider";
+import { AuthProvider, useAuth } from "@/lib/auth-context";
+import { Header } from "@/components/header";
+import LoginPage from "@/pages/login";
+import FeedPage from "@/pages/feed";
+import AdminPage from "@/pages/admin";
+import ChatPage from "@/pages/chat";
+import SettingsPage from "@/pages/settings";
+import ProfilePage from "@/pages/profile";
 import NotFound from "@/pages/not-found";
+
+function ProtectedRoute({ component: Component }: { component: () => JSX.Element }) {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="animate-pulse text-muted-foreground">Loading...</div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <Redirect to="/login" />;
+  }
+
+  return (
+    <div className="min-h-screen bg-background">
+      <Header />
+      <main>
+        <Component />
+      </main>
+    </div>
+  );
+}
+
+function ProtectedFeed() {
+  return <ProtectedRoute component={FeedPage} />;
+}
+
+function ProtectedAdmin() {
+  return <ProtectedRoute component={AdminPage} />;
+}
+
+function ProtectedChat() {
+  return <ProtectedRoute component={ChatPage} />;
+}
+
+function ProtectedSettings() {
+  return <ProtectedRoute component={SettingsPage} />;
+}
+
+function ProtectedProfile() {
+  return <ProtectedRoute component={ProfilePage} />;
+}
 
 function Router() {
   return (
     <Switch>
-      {/* Add pages below */}
-      {/* <Route path="/" component={Home}/> */}
-      {/* Fallback to 404 */}
+      <Route path="/login" component={LoginPage} />
+      <Route path="/admin" component={ProtectedAdmin} />
+      <Route path="/chat" component={ProtectedChat} />
+      <Route path="/settings" component={ProtectedSettings} />
+      <Route path="/profile" component={ProtectedProfile} />
+      <Route path="/" component={ProtectedFeed} />
       <Route component={NotFound} />
     </Switch>
   );
@@ -19,10 +76,14 @@ function Router() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Router />
-      </TooltipProvider>
+      <ThemeProvider>
+        <TooltipProvider>
+          <AuthProvider>
+            <Router />
+            <Toaster />
+          </AuthProvider>
+        </TooltipProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }
