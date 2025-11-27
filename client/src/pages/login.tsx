@@ -1,17 +1,18 @@
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { signInWithGoogle, signInWithMicrosoft, isFirebaseConfigured } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import { useLocation } from "wouter";
-import { useEffect } from "react";
 import { SiGoogle } from "react-icons/si";
-import { Mail, AlertTriangle } from "lucide-react";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Mail } from "lucide-react";
 import brotherhoodFlag from "@assets/flag png_1764277483845.png";
 
 export default function LoginPage() {
-  const { user, loading, isConfigured } = useAuth();
+  const { user, loading } = useAuth();
   const [, setLocation] = useLocation();
+  const [googleLoading, setGoogleLoading] = useState(false);
+  const [microsoftLoading, setMicrosoftLoading] = useState(false);
 
   useEffect(() => {
     if (!loading && user) {
@@ -20,18 +21,30 @@ export default function LoginPage() {
   }, [user, loading, setLocation]);
 
   const handleGoogleLogin = async () => {
+    setGoogleLoading(true);
     try {
-      await signInWithGoogle();
+      const result = await signInWithGoogle();
+      if (result?.user) {
+        window.location.href = "/";
+      }
     } catch (error) {
       console.error("Google login failed:", error);
+    } finally {
+      setGoogleLoading(false);
     }
   };
 
   const handleMicrosoftLogin = async () => {
+    setMicrosoftLoading(true);
     try {
-      await signInWithMicrosoft();
+      const result = await signInWithMicrosoft();
+      if (result?.user) {
+        window.location.href = "/";
+      }
     } catch (error) {
       console.error("Microsoft login failed:", error);
+    } finally {
+      setMicrosoftLoading(false);
     }
   };
 
@@ -61,37 +74,33 @@ export default function LoginPage() {
           <CardDescription data-testid="text-login-description">
             Sign in to access the community forum and chat
           </CardDescription>
+          {!isFirebaseConfigured && (
+            <p className="text-xs text-muted-foreground">
+              (Test mode: Click below to sign in with a test account)
+            </p>
+          )}
         </CardHeader>
         <CardContent className="space-y-4">
-          {!isConfigured && (
-            <Alert variant="destructive" className="mb-4">
-              <AlertTriangle className="h-4 w-4" />
-              <AlertDescription>
-                Firebase authentication is not configured. Please add the required environment variables.
-              </AlertDescription>
-            </Alert>
-          )}
-          
           <Button 
             variant="default" 
             className="w-full gap-3"
             onClick={handleGoogleLogin}
-            disabled={!isConfigured}
+            disabled={googleLoading}
             data-testid="button-google-login"
           >
             <SiGoogle className="h-5 w-5" />
-            Sign in with Google
+            {googleLoading ? "Signing in..." : "Sign in with Google"}
           </Button>
           
           <Button 
             variant="secondary" 
             className="w-full gap-3"
             onClick={handleMicrosoftLogin}
-            disabled={!isConfigured}
+            disabled={microsoftLoading}
             data-testid="button-microsoft-login"
           >
             <Mail className="h-5 w-5" />
-            Sign in with Outlook
+            {microsoftLoading ? "Signing in..." : "Sign in with Outlook"}
           </Button>
 
           <p className="text-center text-sm text-muted-foreground pt-4">

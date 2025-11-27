@@ -32,19 +32,22 @@ microsoftProvider.setCustomParameters({
 });
 
 // Test user for development when Firebase is not configured
-const testUser = {
+const createTestUser = () => ({
   uid: "test-user-123",
   email: "test@example.com",
   displayName: "Test User",
   photoURL: null,
   getIdToken: async () => "test-token-development-only"
-};
+} as any);
 
 export async function signInWithGoogle() {
   if (!auth) {
     // For development/testing when Firebase is not configured
     if (import.meta.env.DEV) {
       console.warn("Firebase not configured - using test user for development");
+      const testUser = createTestUser();
+      // Store for persistence
+      sessionStorage.setItem("devUser", JSON.stringify(testUser));
       return { user: testUser };
     }
     throw new Error("Firebase not configured. Please set up Firebase credentials.");
@@ -57,6 +60,9 @@ export async function signInWithMicrosoft() {
     // For development/testing when Firebase is not configured
     if (import.meta.env.DEV) {
       console.warn("Firebase not configured - using test user for development");
+      const testUser = createTestUser();
+      // Store for persistence
+      sessionStorage.setItem("devUser", JSON.stringify(testUser));
       return { user: testUser };
     }
     throw new Error("Firebase not configured. Please set up Firebase credentials.");
@@ -76,12 +82,21 @@ export function onAuthChange(callback: (user: FirebaseUser | null) => void) {
   if (!auth) {
     // In development mode without Firebase, check sessionStorage
     if (import.meta.env.DEV) {
-      const stored = sessionStorage.getItem("devUser");
-      if (stored) {
-        callback(JSON.parse(stored) as FirebaseUser);
-      } else {
-        callback(null);
-      }
+      setTimeout(() => {
+        const stored = sessionStorage.getItem("devUser");
+        if (stored) {
+          try {
+            const user = JSON.parse(stored);
+            user.getIdToken = async () => "test-token-development-only";
+            callback(user as FirebaseUser);
+          } catch (e) {
+            console.error("Failed to parse dev user:", e);
+            callback(null);
+          }
+        } else {
+          callback(null);
+        }
+      }, 0);
       // Return no-op unsubscribe
       return () => {};
     }
