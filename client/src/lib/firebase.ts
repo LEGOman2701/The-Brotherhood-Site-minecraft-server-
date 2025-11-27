@@ -41,10 +41,16 @@ const createTestUser = () => ({
 } as any);
 
 export async function signInWithGoogle() {
+  // Check if Firebase is actually configured BEFORE opening any popups
+  if (!isFirebaseConfigured) {
+    console.log("Firebase not configured - using test user for development");
+    const testUser = createTestUser();
+    sessionStorage.setItem("devUser", JSON.stringify(testUser));
+    return { user: testUser };
+  }
+
   try {
-    if (!auth) {
-      throw new Error("Auth not initialized");
-    }
+    if (!auth) throw new Error("Auth not initialized");
     return await signInWithPopup(auth, googleProvider);
   } catch (error) {
     // Fall back to test user in dev mode
@@ -59,10 +65,16 @@ export async function signInWithGoogle() {
 }
 
 export async function signInWithMicrosoft() {
+  // Check if Firebase is actually configured BEFORE opening any popups
+  if (!isFirebaseConfigured) {
+    console.log("Firebase not configured - using test user for development");
+    const testUser = createTestUser();
+    sessionStorage.setItem("devUser", JSON.stringify(testUser));
+    return { user: testUser };
+  }
+
   try {
-    if (!auth) {
-      throw new Error("Auth not initialized");
-    }
+    if (!auth) throw new Error("Auth not initialized");
     return await signInWithPopup(auth, microsoftProvider);
   } catch (error) {
     // Fall back to test user in dev mode
@@ -77,14 +89,13 @@ export async function signInWithMicrosoft() {
 }
 
 export async function logOut() {
+  if (!isFirebaseConfigured) {
+    sessionStorage.removeItem("devUser");
+    return;
+  }
+
   try {
-    if (!auth) {
-      if (import.meta.env.DEV) {
-        sessionStorage.removeItem("devUser");
-        return;
-      }
-      throw new Error("Firebase not configured");
-    }
+    if (!auth) throw new Error("Firebase not configured");
     return await signOut(auth);
   } catch (error) {
     if (import.meta.env.DEV) {
