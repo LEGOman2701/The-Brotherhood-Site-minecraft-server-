@@ -39,6 +39,7 @@ export interface IStorage {
   // Chat
   getChatMessages(limit?: number): Promise<ChatMessageWithAuthor[]>;
   createChatMessage(message: InsertChatMessage): Promise<ChatMessage>;
+  deleteChatMessage(id: number): Promise<void>;
   clearChatMessages(): Promise<void>;
   
   // Settings
@@ -266,6 +267,10 @@ export class DatabaseStorage implements IStorage {
   async createChatMessage(message: InsertChatMessage): Promise<ChatMessage> {
     const [newMessage] = await db.insert(chatMessages).values(message).returning();
     return newMessage;
+  }
+
+  async deleteChatMessage(id: number): Promise<void> {
+    await db.delete(chatMessages).where(eq(chatMessages.id, id));
   }
 
   async clearChatMessages(): Promise<void> {

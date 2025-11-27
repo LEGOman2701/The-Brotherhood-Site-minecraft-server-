@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Send, MessageCircle, Users } from "lucide-react";
+import { Send, MessageCircle, Users, Trash2 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { useAuth } from "@/lib/auth-context";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -30,8 +30,9 @@ export default function ChatPage() {
   useEffect(() => {
     try {
       const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-      const host = window.location.host || "localhost:5000";
-      const wsUrl = `${protocol}//${host}/ws`;
+      const hostname = window.location.hostname || "localhost";
+      const port = window.location.port ? `:${window.location.port}` : "";
+      const wsUrl = `${protocol}//${hostname}${port}/ws`;
       const ws = new WebSocket(wsUrl);
 
       ws.onopen = () => {
@@ -86,6 +87,19 @@ export default function ChatPage() {
     },
   });
 
+  const deleteMutation = useMutation({
+    mutationFn: async (messageId: number) => {
+      return apiRequest("DELETE", `/api/chat/${messageId}`, {});
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/chat"] });
+      toast({ title: "Message deleted" });
+    },
+    onError: () => {
+      toast({ title: "Failed to delete message", variant: "destructive" });
+    },
+  });
+
   const handleSend = () => {
     if (!message.trim() || !user) return;
     sendMutation.mutate(message.trim());
@@ -133,11 +147,12 @@ export default function ChatPage() {
           <div className="space-y-4">
             {messages.map((msg) => {
               const isOwnMessage = msg.authorId === user?.id;
+              const isAdmin = user?.hasAdminAccess;
               
               return (
                 <div 
                   key={msg.id} 
-                  className={`flex items-start gap-3 ${isOwnMessage ? "flex-row-reverse" : ""}`}
+                  className={`flex items-start gap-3 group ${isOwnMessage ? "flex-row-reverse" : ""}`}
                   data-testid={`chat-message-${msg.id}`}
                 >
                   <Avatar className="h-8 w-8 flex-shrink-0">
@@ -153,14 +168,28 @@ export default function ChatPage() {
                         {formatDistanceToNow(new Date(msg.createdAt), { addSuffix: true })}
                       </span>
                     </div>
-                    <div 
-                      className={`px-4 py-2 rounded-lg max-w-xs sm:max-w-md break-words ${
-                        isOwnMessage 
-                          ? "bg-primary text-primary-foreground" 
-                          : "bg-muted"
-                      }`}
-                    >
-                      <p className="text-sm">{msg.content}</p>
+                    <div className="flex items-center gap-2">
+                      <div 
+                        className={`px-4 py-2 rounded-lg max-w-xs sm:max-w-md break-words ${
+                          isOwnMessage 
+                            ? "bg-primary text-primary-foreground" 
+                            : "bg-muted"
+                        }`}
+                      >
+                        <p className="text-sm">{msg.content}</p>
+                      </div>
+                      {isAdmin && (
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                          onClick={() => deleteMutation.mutate(msg.id)}
+                          disabled={deleteMutation.isPending}
+                          data-testid={`button-delete-message-${msg.id}`}
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      )}
                     </div>
                   </div>
                 </div>

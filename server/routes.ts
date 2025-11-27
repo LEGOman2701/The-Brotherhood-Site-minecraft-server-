@@ -350,6 +350,25 @@ export async function registerRoutes(
     }
   });
 
+  // Delete chat message (admin only)
+  app.delete("/api/chat/:id", authMiddleware, async (req, res) => {
+    try {
+      const userId = req.userId!;
+      const messageId = parseInt(req.params.id);
+      
+      const user = await storage.getUser(userId);
+      if (!user?.hasAdminAccess) {
+        return res.status(403).json({ error: "Admin access required" });
+      }
+
+      await storage.deleteChatMessage(messageId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Delete chat error:", error);
+      res.status(500).json({ error: "Failed to delete message" });
+    }
+  });
+
   // Check if admin password is set
   app.get("/api/admin/check-password", authMiddleware, async (req, res) => {
     try {
