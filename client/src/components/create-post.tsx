@@ -55,7 +55,7 @@ export function CreatePost({ isAdminPost = false }: CreatePostProps) {
         <Textarea
           placeholder={isAdminPost 
             ? "Write an announcement for the community..." 
-            : "What's on your mind?"
+            : "Share something with The Brotherhood..."
           }
           value={content}
           onChange={(e) => setContent(e.target.value)}
