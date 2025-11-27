@@ -1,7 +1,9 @@
 // Firebase authentication setup for The Brotherhood
-// Reference: firebase_barebones_javascript blueprint
 import { initializeApp } from "firebase/app";
 import { getAuth, signInWithPopup, GoogleAuthProvider, OAuthProvider, signOut, onAuthStateChanged, type User as FirebaseUser } from "firebase/auth";
+
+// In development mode, always use test auth (skip Firebase popup issues)
+const isDev = import.meta.env.DEV;
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -11,125 +13,99 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
-// Check if Firebase is configured
+// Check if Firebase is fully configured
 export const isFirebaseConfigured = Boolean(
-  firebaseConfig.apiKey && 
-  firebaseConfig.projectId && 
-  firebaseConfig.appId
+  !isDev && firebaseConfig.apiKey && firebaseConfig.projectId && firebaseConfig.appId
 );
 
-// Initialize Firebase app only if configured
 const app = isFirebaseConfigured ? initializeApp(firebaseConfig) : null;
 export const auth = app ? getAuth(app) : null;
 
-// Google Provider
 const googleProvider = new GoogleAuthProvider();
-
-// Microsoft Provider for Outlook
 const microsoftProvider = new OAuthProvider('microsoft.com');
-microsoftProvider.setCustomParameters({
-  prompt: 'select_account'
-});
+microsoftProvider.setCustomParameters({ prompt: 'select_account' });
 
-// Test user for development when Firebase is not configured
+// Test user for development
 const createTestUser = () => ({
   uid: "test-user-123",
   email: "test@example.com",
   displayName: "Test User",
   photoURL: null,
-  getIdToken: async () => "test-token-development-only"
+  getIdToken: async () => "test-token-dev"
 } as any);
 
 export async function signInWithGoogle() {
-  // Check if Firebase is actually configured BEFORE opening any popups
-  if (!isFirebaseConfigured) {
-    console.log("Firebase not configured - using test user for development");
+  if (isDev) {
+    // In development, always use test user - no Firebase popup
+    console.log("Using test user for development");
     const testUser = createTestUser();
     sessionStorage.setItem("devUser", JSON.stringify(testUser));
+    // Trigger auth state change
+    setTimeout(() => {
+      window.dispatchEvent(new CustomEvent("devAuthChange", { detail: testUser }));
+    }, 0);
     return { user: testUser };
   }
-
-  try {
-    if (!auth) throw new Error("Auth not initialized");
-    return await signInWithPopup(auth, googleProvider);
-  } catch (error) {
-    // Fall back to test user in dev mode
-    if (import.meta.env.DEV) {
-      console.warn("Firebase login failed, using test user for development", error);
-      const testUser = createTestUser();
-      sessionStorage.setItem("devUser", JSON.stringify(testUser));
-      return { user: testUser };
-    }
-    throw error;
-  }
+  
+  if (!auth) throw new Error("Firebase not configured");
+  return signInWithPopup(auth, googleProvider);
 }
 
 export async function signInWithMicrosoft() {
-  // Check if Firebase is actually configured BEFORE opening any popups
-  if (!isFirebaseConfigured) {
-    console.log("Firebase not configured - using test user for development");
+  if (isDev) {
+    // In development, always use test user - no Firebase popup
+    console.log("Using test user for development");
     const testUser = createTestUser();
     sessionStorage.setItem("devUser", JSON.stringify(testUser));
+    // Trigger auth state change
+    setTimeout(() => {
+      window.dispatchEvent(new CustomEvent("devAuthChange", { detail: testUser }));
+    }, 0);
     return { user: testUser };
   }
-
-  try {
-    if (!auth) throw new Error("Auth not initialized");
-    return await signInWithPopup(auth, microsoftProvider);
-  } catch (error) {
-    // Fall back to test user in dev mode
-    if (import.meta.env.DEV) {
-      console.warn("Firebase login failed, using test user for development", error);
-      const testUser = createTestUser();
-      sessionStorage.setItem("devUser", JSON.stringify(testUser));
-      return { user: testUser };
-    }
-    throw error;
-  }
+  
+  if (!auth) throw new Error("Firebase not configured");
+  return signInWithPopup(auth, microsoftProvider);
 }
 
 export async function logOut() {
-  if (!isFirebaseConfigured) {
+  if (isDev) {
     sessionStorage.removeItem("devUser");
+    window.dispatchEvent(new CustomEvent("devAuthChange", { detail: null }));
     return;
   }
-
-  try {
-    if (!auth) throw new Error("Firebase not configured");
-    return await signOut(auth);
-  } catch (error) {
-    if (import.meta.env.DEV) {
-      sessionStorage.removeItem("devUser");
-      return;
-    }
-    throw error;
-  }
+  if (!auth) throw new Error("Firebase not configured");
+  return signOut(auth);
 }
 
 export function onAuthChange(callback: (user: FirebaseUser | null) => void) {
+  if (isDev) {
+    // Check sessionStorage and listen for changes
+    const checkAuth = () => {
+      const stored = sessionStorage.getItem("devUser");
+      if (stored) {
+        const user = JSON.parse(stored);
+        user.getIdToken = async () => "test-token-dev";
+        callback(user);
+      } else {
+        callback(null);
+      }
+    };
+    
+    // Check immediately
+    setTimeout(checkAuth, 0);
+    
+    // Listen for changes
+    const handler = () => checkAuth();
+    window.addEventListener("devAuthChange", handler);
+    return () => window.removeEventListener("devAuthChange", handler);
+  }
+  
   if (!auth) {
-    // In development mode without Firebase, check sessionStorage
-    if (import.meta.env.DEV) {
-      setTimeout(() => {
-        const stored = sessionStorage.getItem("devUser");
-        if (stored) {
-          try {
-            const user = JSON.parse(stored);
-            user.getIdToken = async () => "test-token-development-only";
-            callback(user as FirebaseUser);
-          } catch (e) {
-            console.error("Failed to parse dev user:", e);
-            callback(null);
-          }
-        } else {
-          callback(null);
-        }
-      }, 0);
-      return () => {};
-    }
     callback(null);
     return () => {};
   }
+  
   return onAuthStateChanged(auth, callback);
 }
 

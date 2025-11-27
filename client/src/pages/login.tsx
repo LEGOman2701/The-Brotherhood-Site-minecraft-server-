@@ -23,13 +23,10 @@ export default function LoginPage() {
   const handleGoogleLogin = async () => {
     setGoogleLoading(true);
     try {
-      const result = await signInWithGoogle();
-      if (result?.user) {
-        window.location.href = "/";
-      }
+      await signInWithGoogle();
+      // Redirect will happen automatically when auth state updates
     } catch (error) {
       console.error("Google login failed:", error);
-    } finally {
       setGoogleLoading(false);
     }
   };
@@ -37,13 +34,10 @@ export default function LoginPage() {
   const handleMicrosoftLogin = async () => {
     setMicrosoftLoading(true);
     try {
-      const result = await signInWithMicrosoft();
-      if (result?.user) {
-        window.location.href = "/";
-      }
+      await signInWithMicrosoft();
+      // Redirect will happen automatically when auth state updates
     } catch (error) {
       console.error("Microsoft login failed:", error);
-    } finally {
       setMicrosoftLoading(false);
     }
   };
