@@ -31,23 +31,60 @@ microsoftProvider.setCustomParameters({
   prompt: 'select_account'
 });
 
+// Test user for development when Firebase is not configured
+const testUser = {
+  uid: "test-user-123",
+  email: "test@example.com",
+  displayName: "Test User",
+  photoURL: null,
+  getIdToken: async () => "test-token-development-only"
+};
+
 export async function signInWithGoogle() {
-  if (!auth) throw new Error("Firebase not configured");
+  if (!auth) {
+    // For development/testing when Firebase is not configured
+    if (import.meta.env.DEV) {
+      console.warn("Firebase not configured - using test user for development");
+      return { user: testUser };
+    }
+    throw new Error("Firebase not configured. Please set up Firebase credentials.");
+  }
   return signInWithPopup(auth, googleProvider);
 }
 
 export async function signInWithMicrosoft() {
-  if (!auth) throw new Error("Firebase not configured");
+  if (!auth) {
+    // For development/testing when Firebase is not configured
+    if (import.meta.env.DEV) {
+      console.warn("Firebase not configured - using test user for development");
+      return { user: testUser };
+    }
+    throw new Error("Firebase not configured. Please set up Firebase credentials.");
+  }
   return signInWithPopup(auth, microsoftProvider);
 }
 
 export async function logOut() {
-  if (!auth) throw new Error("Firebase not configured");
+  if (!auth) {
+    if (import.meta.env.DEV) return Promise.resolve();
+    throw new Error("Firebase not configured");
+  }
   return signOut(auth);
 }
 
 export function onAuthChange(callback: (user: FirebaseUser | null) => void) {
   if (!auth) {
+    // In development mode without Firebase, check sessionStorage
+    if (import.meta.env.DEV) {
+      const stored = sessionStorage.getItem("devUser");
+      if (stored) {
+        callback(JSON.parse(stored) as FirebaseUser);
+      } else {
+        callback(null);
+      }
+      // Return no-op unsubscribe
+      return () => {};
+    }
     callback(null);
     return () => {};
   }

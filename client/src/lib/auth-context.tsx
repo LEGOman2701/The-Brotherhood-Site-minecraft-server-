@@ -33,7 +33,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
-              "Authorization": `Bearer ${token}`
+              "Authorization": `Bearer ${token}`,
+              "X-User-Id": fbUser.uid,
             },
             body: JSON.stringify({
               id: fbUser.uid,
@@ -47,6 +48,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             const userData = await response.json();
             setUser(userData);
             setHasAdminAccess(userData.hasAdminAccess);
+            // Store in sessionStorage for development mode
+            if (import.meta.env.DEV) {
+              sessionStorage.setItem("devUser", JSON.stringify(fbUser));
+            }
           }
         } catch (error) {
           console.error("Failed to sync user:", error);
@@ -54,6 +59,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } else {
         setUser(null);
         setHasAdminAccess(false);
+        sessionStorage.removeItem("devUser");
       }
       
       setLoading(false);
