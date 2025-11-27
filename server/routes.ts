@@ -69,10 +69,40 @@ async function authMiddleware(req: Request, res: Response, next: NextFunction) {
   }
 }
 
+// Schedule chat cleanup for midnight PST
+function scheduleChatCleanup() {
+  function scheduleNext() {
+    const now = new Date();
+    // Convert to PST (UTC-8)
+    const pstTime = new Date(now.toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
+    
+    // Calculate next midnight PST
+    const nextMidnight = new Date(pstTime);
+    nextMidnight.setDate(nextMidnight.getDate() + 1);
+    nextMidnight.setHours(0, 0, 0, 0);
+    
+    const msUntilMidnight = nextMidnight.getTime() - pstTime.getTime();
+    
+    setTimeout(async () => {
+      try {
+        await storage.clearChatMessages();
+        console.log("Chat messages cleared at midnight PST");
+      } catch (error) {
+        console.error("Failed to clear chat messages:", error);
+      }
+      scheduleNext(); // Schedule the next cleanup
+    }, msUntilMidnight);
+  }
+  
+  scheduleNext();
+}
+
 export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
+  // Start the chat cleanup scheduler
+  scheduleChatCleanup();
   
   // WebSocket server for real-time chat
   const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
