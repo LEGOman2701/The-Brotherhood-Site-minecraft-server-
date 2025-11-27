@@ -8,19 +8,31 @@ async function throwIfResNotOk(res: Response) {
   }
 }
 
-// Get authorization headers with Firebase ID token
+// Get authorization headers with Firebase ID token or dev user
 async function getAuthHeaders(): Promise<Record<string, string>> {
   const headers: Record<string, string> = {};
   
+  // Try Firebase auth first
   if (auth?.currentUser) {
     try {
       const token = await auth.currentUser.getIdToken();
       headers["Authorization"] = `Bearer ${token}`;
+      headers["X-User-Id"] = auth.currentUser.uid;
     } catch (error) {
       console.error("Failed to get ID token:", error);
     }
-    // Also include user ID as fallback for development
-    headers["X-User-Id"] = auth.currentUser.uid;
+  } else {
+    // Fall back to dev user from sessionStorage (for development mode)
+    const devUserStr = sessionStorage.getItem("devUser");
+    if (devUserStr) {
+      try {
+        const devUser = JSON.parse(devUserStr);
+        headers["Authorization"] = `Bearer test-token-dev`;
+        headers["X-User-Id"] = devUser.uid;
+      } catch (e) {
+        console.error("Failed to parse dev user:", e);
+      }
+    }
   }
   
   return headers;

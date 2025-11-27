@@ -28,9 +28,11 @@ export default function ChatPage() {
 
   // WebSocket connection for real-time updates
   useEffect(() => {
-    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-    const wsUrl = `${protocol}//${window.location.host}/ws`;
-    const ws = new WebSocket(wsUrl);
+    try {
+      const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+      const host = window.location.host || "localhost:5000";
+      const wsUrl = `${protocol}//${host}/ws`;
+      const ws = new WebSocket(wsUrl);
 
     ws.onopen = () => {
       console.log("WebSocket connected");
@@ -47,15 +49,20 @@ export default function ChatPage() {
       }
     };
 
-    ws.onclose = () => {
-      console.log("WebSocket disconnected");
-    };
+      ws.onclose = () => {
+        console.log("WebSocket disconnected");
+      };
 
-    setSocket(ws);
+      setSocket(ws);
 
-    return () => {
-      ws.close();
-    };
+      return () => {
+        ws.close();
+      };
+    } catch (error) {
+      console.error("Failed to create WebSocket:", error);
+      setSocket(null);
+      return () => {};
+    }
   }, []);
 
   // Auto-scroll to bottom when new messages arrive
