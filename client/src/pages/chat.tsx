@@ -34,20 +34,20 @@ export default function ChatPage() {
       const wsUrl = `${protocol}//${host}/ws`;
       const ws = new WebSocket(wsUrl);
 
-    ws.onopen = () => {
-      console.log("WebSocket connected");
-    };
+      ws.onopen = () => {
+        console.log("WebSocket connected");
+      };
 
-    ws.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        if (data.type === "chat_message") {
-          queryClient.invalidateQueries({ queryKey: ["/api/chat"] });
+      ws.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          if (data.type === "chat_message") {
+            queryClient.invalidateQueries({ queryKey: ["/api/chat"] });
+          }
+        } catch (e) {
+          console.error("Failed to parse WebSocket message:", e);
         }
-      } catch (e) {
-        console.error("Failed to parse WebSocket message:", e);
-      }
-    };
+      };
 
       ws.onclose = () => {
         console.log("WebSocket disconnected");
