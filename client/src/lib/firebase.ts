@@ -41,41 +41,58 @@ const createTestUser = () => ({
 } as any);
 
 export async function signInWithGoogle() {
-  if (!auth) {
-    // For development/testing when Firebase is not configured
+  try {
+    if (!auth) {
+      throw new Error("Auth not initialized");
+    }
+    return await signInWithPopup(auth, googleProvider);
+  } catch (error) {
+    // Fall back to test user in dev mode
     if (import.meta.env.DEV) {
-      console.warn("Firebase not configured - using test user for development");
+      console.warn("Firebase login failed, using test user for development", error);
       const testUser = createTestUser();
-      // Store for persistence
       sessionStorage.setItem("devUser", JSON.stringify(testUser));
       return { user: testUser };
     }
-    throw new Error("Firebase not configured. Please set up Firebase credentials.");
+    throw error;
   }
-  return signInWithPopup(auth, googleProvider);
 }
 
 export async function signInWithMicrosoft() {
-  if (!auth) {
-    // For development/testing when Firebase is not configured
+  try {
+    if (!auth) {
+      throw new Error("Auth not initialized");
+    }
+    return await signInWithPopup(auth, microsoftProvider);
+  } catch (error) {
+    // Fall back to test user in dev mode
     if (import.meta.env.DEV) {
-      console.warn("Firebase not configured - using test user for development");
+      console.warn("Firebase login failed, using test user for development", error);
       const testUser = createTestUser();
-      // Store for persistence
       sessionStorage.setItem("devUser", JSON.stringify(testUser));
       return { user: testUser };
     }
-    throw new Error("Firebase not configured. Please set up Firebase credentials.");
+    throw error;
   }
-  return signInWithPopup(auth, microsoftProvider);
 }
 
 export async function logOut() {
-  if (!auth) {
-    if (import.meta.env.DEV) return Promise.resolve();
-    throw new Error("Firebase not configured");
+  try {
+    if (!auth) {
+      if (import.meta.env.DEV) {
+        sessionStorage.removeItem("devUser");
+        return;
+      }
+      throw new Error("Firebase not configured");
+    }
+    return await signOut(auth);
+  } catch (error) {
+    if (import.meta.env.DEV) {
+      sessionStorage.removeItem("devUser");
+      return;
+    }
+    throw error;
   }
-  return signOut(auth);
 }
 
 export function onAuthChange(callback: (user: FirebaseUser | null) => void) {
@@ -97,7 +114,6 @@ export function onAuthChange(callback: (user: FirebaseUser | null) => void) {
           callback(null);
         }
       }, 0);
-      // Return no-op unsubscribe
       return () => {};
     }
     callback(null);
