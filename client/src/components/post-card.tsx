@@ -194,7 +194,7 @@ export function PostCard({ post }: PostCardProps) {
           <Button 
             variant="ghost" 
             size="sm" 
-            className={`gap-2 ${preferences.showAnimations ? "active-elevate-2" : ""}`}
+            className={`gap-2 interactive-element ${preferences.showAnimations ? "active-elevate-2" : ""}`}
             onClick={handleLike}
             disabled={!user || likeMutation.isPending}
             data-testid={`button-like-${post.id}`}
@@ -208,7 +208,7 @@ export function PostCard({ post }: PostCardProps) {
           <Button 
             variant="ghost" 
             size="sm" 
-            className={`gap-2 ${preferences.showAnimations ? "active-elevate-2" : ""}`}
+            className={`gap-2 interactive-element ${preferences.showAnimations ? "active-elevate-2" : ""}`}
             onClick={() => setShowComments(!showComments)}
             data-testid={`button-comments-${post.id}`}
           >
@@ -219,7 +219,7 @@ export function PostCard({ post }: PostCardProps) {
         </div>
 
         {showComments && (
-          <div className={`w-full space-y-3 border-t pt-4 ${preferences.showAnimations ? "animate-slide-down" : ""}`}>
+          <div className={`w-full space-y-3 border-t pt-4 ${preferences.showAnimations ? "animate-expand-bounce" : ""}`}>
             {user && (
               <div className="flex gap-2">
                 <Textarea
