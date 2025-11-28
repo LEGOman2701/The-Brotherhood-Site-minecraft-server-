@@ -7,6 +7,20 @@ import { storage } from "./storage";
 import { verifyIdToken, isFirebaseAdminInitialized } from "./firebase-admin";
 import bcrypt from "bcrypt";
 
+// Helper function to send Discord webhooks
+async function sendDiscordWebhook(webhookUrl: string, embed: any) {
+  if (!webhookUrl) return;
+  try {
+    await fetch(webhookUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ embeds: [embed] }),
+    });
+  } catch (error) {
+    console.error("Failed to send Discord webhook:", error);
+  }
+}
+
 // Extend Request type to include user info
 declare global {
   namespace Express {
@@ -235,6 +249,27 @@ export async function registerRoutes(
         isAdminPost: isAdminPost || false,
         fileAttachmentIds: fileAttachmentIds || undefined,
       });
+
+      // Send Discord webhook if configured
+      if (post) {
+        const author = await storage.getUser(userId);
+        const webhookKey = isAdminPost ? "discord_announcements_webhook" : "discord_feed_webhook";
+        const webhookUrl = await storage.getSetting(webhookKey);
+        
+        if (webhookUrl && author) {
+          const embed = {
+            title: isAdminPost ? "New Announcement" : "New Post",
+            description: post.content.substring(0, 2000),
+            author: isAdminPost ? undefined : {
+              name: author.displayName || "Unknown",
+              icon_url: author.photoURL || undefined,
+            },
+            color: isAdminPost ? 16711680 : 3447003, // Red for announcements, blue for posts
+            timestamp: post.createdAt?.toISOString(),
+          };
+          await sendDiscordWebhook(webhookUrl, embed);
+        }
+      }
 
       res.json(post);
     } catch (error) {
