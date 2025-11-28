@@ -1,8 +1,8 @@
 #!/bin/bash
 set -e
 
-echo "Installing dependencies..."
-npm ci --include=dev
+echo "Installing all dependencies including dev..."
+npm install
 
-echo "Running build..."
-npm run build
+echo "Running build with Node directly..."
+node script/build.js
