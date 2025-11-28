@@ -7,6 +7,17 @@ import { storage } from "./storage";
 import { verifyIdToken, isFirebaseAdminInitialized } from "./firebase-admin";
 import bcrypt from "bcrypt";
 
+// Role to Discord embed color mapping (decimal)
+function getRoleColor(role?: string | null): number {
+  switch (role) {
+    case "Supreme Leader": return 16776960; // Yellow
+    case "The Council of Snow": return 3381759; // Light Blue
+    case "The Great Hall of the North": return 25600; // Dark Blue
+    case "admin": return 16711680; // Red
+    default: return 3447003; // Default blue
+  }
+}
+
 // Role to Discord ANSI color mapping
 function getRoleAnsiColor(role?: string | null): string {
   switch (role) {
@@ -289,13 +300,15 @@ export async function registerRoutes(
             };
             await sendDiscordWebhook(webhookUrl, JSON.stringify(embed), true);
           } else {
-            // Feed posts use ANSI colored text format with name and role
-            const colorCode = getRoleAnsiColor(author.role);
+            // Feed posts use embeds with colored name + role in title
             const roleDisplay = author.role || "Member";
-            const ansiText = `\u001b[2;${colorCode}m${author.displayName || "Unknown"} (${roleDisplay})\u001b[0m: ${post.content.substring(0, 2000)}`;
-            const discordMessage = `\`\`\`ansi\n${ansiText}\n\`\`\``;
-            console.log("Sending feed webhook:", { webhookUrl: webhookUrl?.substring(0, 50), discordMessage });
-            await sendDiscordWebhook(webhookUrl, discordMessage, false);
+            const embed = {
+              title: `${author.displayName || "Unknown"} (${roleDisplay})`,
+              description: post.content.substring(0, 2000),
+              color: getRoleColor(author.role),
+              timestamp: post.createdAt?.toISOString(),
+            };
+            await sendDiscordWebhook(webhookUrl, JSON.stringify(embed), true);
           }
         }
       }
