@@ -304,9 +304,10 @@ export async function registerRoutes(
             };
             await sendDiscordWebhook(webhookUrl, JSON.stringify(embed), true);
           } else {
-            // Feed posts use simple text format with thread name containing username
+            // Feed posts use simple text format with colored thread name
             const message = post.content.substring(0, 2000);
-            const threadName = `${author.displayName || "Unknown"} (${author.role || "Member"})`;
+            const colorCode = getRoleAnsiColor(author.role);
+            const threadName = `\u001b[2;${colorCode}m${author.displayName || "Unknown"} (${author.role || "Member"})\u001b[0m`;
             await sendDiscordWebhook(webhookUrl, message, false, threadName);
           }
         }
