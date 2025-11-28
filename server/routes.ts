@@ -304,10 +304,11 @@ export async function registerRoutes(
             };
             await sendDiscordWebhook(webhookUrl, JSON.stringify(embed), true);
           } else {
-            // Feed posts use simple text format
+            // Feed posts use simple text format with thread name
             const roleDisplay = author.role || "Member";
             const message = `**${author.displayName || "Unknown"} (${roleDisplay})**\n${post.content.substring(0, 2000)}`;
-            await sendDiscordWebhook(webhookUrl, message, false);
+            const threadName = `${author.displayName || "Unknown"} - Post`;
+            await sendDiscordWebhook(webhookUrl, message, false, threadName);
           }
         }
       }
