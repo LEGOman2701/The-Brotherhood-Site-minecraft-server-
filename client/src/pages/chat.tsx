@@ -30,9 +30,7 @@ export default function ChatPage() {
   useEffect(() => {
     try {
       const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-      const hostname = window.location.hostname || "localhost";
-      const port = window.location.port ? `:${window.location.port}` : "";
-      const wsUrl = `${protocol}//${hostname}${port}/ws`;
+      const wsUrl = `${protocol}//${window.location.host}/ws`;
       const ws = new WebSocket(wsUrl);
 
       ws.onopen = () => {
