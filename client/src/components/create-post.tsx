@@ -21,7 +21,7 @@ export function CreatePost({ isAdminPost = false }: CreatePostProps) {
   const uploadFileMutation = useMutation({
     mutationFn: async (file: File) => {
       const reader = new FileReader();
-      return new Promise<void>((resolve, reject) => {
+      return new Promise<any>((resolve, reject) => {
         reader.onload = async () => {
           const base64 = reader.result?.toString().split(",")[1];
           if (!base64) {
@@ -36,8 +36,7 @@ export function CreatePost({ isAdminPost = false }: CreatePostProps) {
               size: file.size,
               data: base64,
             });
-            setFileAttachments(prev => [...prev, uploaded]);
-            resolve();
+            resolve(uploaded);
           } catch (err) {
             reject(err);
           }
@@ -45,6 +44,9 @@ export function CreatePost({ isAdminPost = false }: CreatePostProps) {
         reader.onerror = () => reject(reader.error);
         reader.readAsDataURL(file);
       });
+    },
+    onSuccess: (uploaded) => {
+      setFileAttachments(prev => [...prev, uploaded]);
     },
     onError: () => {
       toast({ title: "Failed to upload file", variant: "destructive" });
@@ -119,8 +121,8 @@ export function CreatePost({ isAdminPost = false }: CreatePostProps) {
         />
         {fileAttachments.length > 0 && (
           <div className="mt-3 flex flex-wrap gap-2">
-            {fileAttachments.map((file) => (
-              <div key={file.id} className="bg-muted rounded px-2 py-1 flex items-center gap-2 text-sm">
+            {fileAttachments.map((file, idx) => (
+              <div key={`file-${file.id}-${idx}`} className="bg-muted rounded px-2 py-1 flex items-center gap-2 text-sm">
                 <span>{file.filename}</span>
                 <button
                   onClick={() => removeAttachment(file.id)}
