@@ -382,6 +382,30 @@ export async function registerRoutes(
         authorId: userId,
       });
 
+      // Send Discord webhook if configured (for regular posts only)
+      const post = await storage.getPost(postId);
+      if (post && !post.isAdminPost) {
+        const author = await storage.getUser(userId);
+        const webhookUrl = await storage.getSetting("discord_feed_webhook");
+        
+        if (webhookUrl && author) {
+          // Format comments same as chat messages with ANSI colors
+          const colorCode = getRoleAnsiColor(author.role);
+          const ansiText = `\u001b[2;${colorCode}m${author.displayName || "Unknown"}\u001b[0m - ${comment.content.substring(0, 2000)}`;
+          const discordMessage = `\`\`\`ansi\n${ansiText}\n\`\`\``;
+          
+          // Create thread name based on the post author for routing to correct thread
+          const postAuthor = await storage.getUser(post.authorId);
+          let emoji = "⬜";
+          if (postAuthor?.role === "Supreme Leader") emoji = "🟨";
+          else if (postAuthor?.role === "Council" || postAuthor?.role === "Great Hall") emoji = "🟦";
+          else if (postAuthor?.role === "Admin") emoji = "🟥";
+          const threadName = `${emoji} ${postAuthor?.displayName || "Unknown"} (${postAuthor?.role || "Member"})`;
+          
+          await sendDiscordWebhook(webhookUrl, discordMessage, false, threadName);
+        }
+      }
+
       res.json(comment);
     } catch (error) {
       console.error("Create comment error:", error);
