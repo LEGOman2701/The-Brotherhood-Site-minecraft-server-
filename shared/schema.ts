@@ -31,6 +31,7 @@ export const posts = pgTable("posts", {
   authorId: varchar("author_id", { length: 255 }).notNull().references(() => users.id),
   isAdminPost: boolean("is_admin_post").default(false).notNull(),
   fileAttachmentIds: text("file_attachment_ids"), // JSON array of file IDs
+  discordThreadId: varchar("discord_thread_id", { length: 255 }), // Discord forum thread ID for comments
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 

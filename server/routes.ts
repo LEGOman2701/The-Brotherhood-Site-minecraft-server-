@@ -398,8 +398,8 @@ export async function registerRoutes(
           const postAuthor = await storage.getUser(post.authorId);
           let emoji = "⬜";
           if (postAuthor?.role === "Supreme Leader") emoji = "🟨";
-          else if (postAuthor?.role === "Council" || postAuthor?.role === "Great Hall") emoji = "🟦";
-          else if (postAuthor?.role === "Admin") emoji = "🟥";
+          else if (postAuthor?.role === "The Council of Snow" || postAuthor?.role === "The Great Hall of the North") emoji = "🟦";
+          else if (postAuthor?.role === "admin") emoji = "🟥";
           const threadName = `${emoji} ${postAuthor?.displayName || "Unknown"} (${postAuthor?.role || "Member"})`;
           
           await sendDiscordWebhook(webhookUrl, discordMessage, false, threadName);
