@@ -451,6 +451,48 @@ export async function registerRoutes(
     }
   });
 
+  // Get direct messages conversation
+  app.get("/api/dm/:userId", authMiddleware, async (req, res) => {
+    try {
+      const userId = req.userId!;
+      const otherUserId = req.params.userId;
+      
+      const messages = await storage.getConversation(userId, otherUserId);
+      res.json(messages);
+    } catch (error) {
+      console.error("Get DM error:", error);
+      res.status(500).json({ error: "Failed to get messages" });
+    }
+  });
+
+  // Send direct message
+  app.post("/api/dm/:userId", authMiddleware, async (req, res) => {
+    try {
+      const senderId = req.userId!;
+      const recipientId = req.params.userId;
+      const { content } = req.body;
+      
+      if (!content || content.trim().length === 0) {
+        return res.status(400).json({ error: "Content is required" });
+      }
+
+      if (senderId === recipientId) {
+        return res.status(400).json({ error: "Cannot message yourself" });
+      }
+
+      const message = await storage.createDirectMessage({
+        content: content.trim(),
+        senderId,
+        recipientId,
+      });
+
+      res.json(message);
+    } catch (error) {
+      console.error("Send DM error:", error);
+      res.status(500).json({ error: "Failed to send message" });
+    }
+  });
+
   // Check if admin password is set
   app.get("/api/admin/check-password", authMiddleware, async (req, res) => {
     try {

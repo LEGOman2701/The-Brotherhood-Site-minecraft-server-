@@ -5,10 +5,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PostCard } from "@/components/post-card";
-import { User, Mail, Calendar, FileText } from "lucide-react";
+import { User, Mail, Calendar, FileText, MessageSquare } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { useAuth } from "@/lib/auth-context";
-import { useRoute } from "wouter";
+import { useRoute, useLocation } from "wouter";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import type { PostWithAuthor, User as UserType } from "@shared/schema";
@@ -23,6 +23,7 @@ export default function ProfilePage() {
   const { user, isOwner } = useAuth();
   const { toast } = useToast();
   const [match, params] = useRoute("/profile/:userId");
+  const [, setLocation] = useLocation();
   const userId = params?.userId;
   const isOwnProfile = !userId || userId === user?.id;
 
@@ -129,8 +130,20 @@ export default function ProfilePage() {
                 Member since {formatDistanceToNow(new Date(displayUser.createdAt), { addSuffix: true })}
               </span>
             </div>
-            {(isOwner || user?.hasAdminAccess) && (
+            {!isOwnProfile && (
               <div className="pt-2 border-t">
+                <Button
+                  onClick={() => setLocation(`/dm/${userId}`)}
+                  className="w-full gap-2"
+                  data-testid="button-message-user"
+                >
+                  <MessageSquare className="h-4 w-4" />
+                  Send Message
+                </Button>
+              </div>
+            )}
+            {(isOwner || user?.hasAdminAccess) && (
+              <div className={`pt-2 ${!isOwnProfile ? "border-t" : ""}`}>
                 <p className="text-xs font-semibold mb-2 text-muted-foreground">Assign Role</p>
                 <div className="flex flex-wrap gap-2">
                   {ROLES.map((role) => (

@@ -95,6 +95,26 @@ export const chatMessagesRelations = relations(chatMessages, ({ one }) => ({
   }),
 }));
 
+// Direct messages table
+export const directMessages = pgTable("direct_messages", {
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  content: text("content").notNull(),
+  senderId: varchar("sender_id", { length: 255 }).notNull().references(() => users.id),
+  recipientId: varchar("recipient_id", { length: 255 }).notNull().references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const directMessagesRelations = relations(directMessages, ({ one }) => ({
+  sender: one(users, {
+    fields: [directMessages.senderId],
+    references: [users.id],
+  }),
+  recipient: one(users, {
+    fields: [directMessages.recipientId],
+    references: [users.id],
+  }),
+}));
+
 // App settings table - stores admin password
 export const appSettings = pgTable("app_settings", {
   key: varchar("key", { length: 100 }).primaryKey(),
@@ -107,6 +127,7 @@ export const insertPostSchema = createInsertSchema(posts).omit({ id: true, creat
 export const insertCommentSchema = createInsertSchema(comments).omit({ id: true, createdAt: true });
 export const insertLikeSchema = createInsertSchema(likes);
 export const insertChatMessageSchema = createInsertSchema(chatMessages).omit({ id: true, createdAt: true });
+export const insertDirectMessageSchema = createInsertSchema(directMessages).omit({ id: true, createdAt: true });
 export const insertAppSettingSchema = createInsertSchema(appSettings);
 
 // Types
@@ -120,6 +141,8 @@ export type Like = typeof likes.$inferSelect;
 export type InsertLike = z.infer<typeof insertLikeSchema>;
 export type ChatMessage = typeof chatMessages.$inferSelect;
 export type InsertChatMessage = z.infer<typeof insertChatMessageSchema>;
+export type DirectMessage = typeof directMessages.$inferSelect;
+export type InsertDirectMessage = z.infer<typeof insertDirectMessageSchema>;
 export type AppSetting = typeof appSettings.$inferSelect;
 export type InsertAppSetting = z.infer<typeof insertAppSettingSchema>;
 
@@ -134,3 +157,4 @@ export type PostWithAuthor = Post & {
 };
 
 export type ChatMessageWithAuthor = ChatMessage & { author: User };
+export type DirectMessageWithAuthor = DirectMessage & { sender: User; recipient: User };

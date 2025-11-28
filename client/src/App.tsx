@@ -11,6 +11,7 @@ import LoginPage from "@/pages/login";
 import FeedPage from "@/pages/feed";
 import AdminPage from "@/pages/admin";
 import ChatPage from "@/pages/chat";
+import DMPage from "@/pages/dm";
 import SettingsPage from "@/pages/settings";
 import ProfilePage from "@/pages/profile";
 import NotFound from "@/pages/not-found";
@@ -64,6 +65,10 @@ function ProtectedChat() {
   return <ProtectedRoute component={ChatPage} />;
 }
 
+function ProtectedDM() {
+  return <ProtectedRoute component={DMPage} />;
+}
+
 function ProtectedSettings() {
   return <ProtectedRoute component={SettingsPage} />;
 }
@@ -78,6 +83,7 @@ function Router() {
       <Route path="/login" component={LoginPage} />
       <Route path="/admin" component={ProtectedAdmin} />
       <Route path="/chat" component={ProtectedChat} />
+      <Route path="/dm/:userId" component={ProtectedDM} />
       <Route path="/settings" component={ProtectedSettings} />
       <Route path="/profile/:userId" component={ProtectedProfile} />
       <Route path="/profile" component={ProtectedProfile} />

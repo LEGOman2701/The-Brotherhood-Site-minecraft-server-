@@ -1,14 +1,15 @@
 // Database storage implementation for The Brotherhood
 // Reference: javascript_database blueprint
 import { 
-  users, posts, comments, likes, chatMessages, appSettings,
+  users, posts, comments, likes, chatMessages, directMessages, appSettings,
   type User, type InsertUser,
   type Post, type InsertPost,
   type Comment, type InsertComment,
   type Like, type InsertLike,
   type ChatMessage, type InsertChatMessage,
+  type DirectMessage, type InsertDirectMessage,
   type AppSetting, type InsertAppSetting,
-  type PostWithAuthor, type ChatMessageWithAuthor
+  type PostWithAuthor, type ChatMessageWithAuthor, type DirectMessageWithAuthor
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, sql, count } from "drizzle-orm";
@@ -43,6 +44,10 @@ export interface IStorage {
   createChatMessage(message: InsertChatMessage): Promise<ChatMessage>;
   deleteChatMessage(id: number): Promise<void>;
   clearChatMessages(): Promise<void>;
+
+  // Direct Messages
+  getConversation(userId1: string, userId2: string): Promise<DirectMessageWithAuthor[]>;
+  createDirectMessage(message: InsertDirectMessage): Promise<DirectMessage>;
   
   // Settings
   getSetting(key: string): Promise<string | undefined>;
@@ -292,6 +297,33 @@ export class DatabaseStorage implements IStorage {
 
   async clearChatMessages(): Promise<void> {
     await db.delete(chatMessages);
+  }
+
+  // Direct Messages
+  async getConversation(userId1: string, userId2: string): Promise<DirectMessageWithAuthor[]> {
+    const messages = await db
+      .select()
+      .from(directMessages)
+      .where(
+        sql`(${directMessages.senderId} = ${userId1} AND ${directMessages.recipientId} = ${userId2}) OR (${directMessages.senderId} = ${userId2} AND ${directMessages.recipientId} = ${userId1})`
+      )
+      .orderBy(desc(directMessages.createdAt))
+      .limit(50);
+
+    const result = await Promise.all(
+      messages.map(async (msg) => {
+        const [sender] = await db.select().from(users).where(eq(users.id, msg.senderId));
+        const [recipient] = await db.select().from(users).where(eq(users.id, msg.recipientId));
+        return { ...msg, sender, recipient };
+      })
+    );
+
+    return result.reverse();
+  }
+
+  async createDirectMessage(message: InsertDirectMessage): Promise<DirectMessage> {
+    const [newMessage] = await db.insert(directMessages).values(message).returning();
+    return newMessage;
   }
 
   // Settings
