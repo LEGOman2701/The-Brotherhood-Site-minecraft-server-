@@ -8,7 +8,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Send, MessageCircle, Users, Trash2 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { useAuth } from "@/lib/auth-context";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -17,6 +17,7 @@ import type { ChatMessageWithAuthor } from "@shared/schema";
 export default function ChatPage() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
   const [message, setMessage] = useState("");
   const [socket, setSocket] = useState<WebSocket | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -160,12 +161,18 @@ export default function ChatPage() {
                   className={`flex items-start gap-3 group ${isOwnMessage ? "flex-row-reverse" : ""}`}
                   data-testid={`chat-message-${msg.id}`}
                 >
-                  <Avatar className="h-8 w-8 flex-shrink-0">
-                    <AvatarImage src={msg.author.photoURL || undefined} />
-                    <AvatarFallback className="text-xs bg-secondary text-secondary-foreground">
-                      {getInitials(msg.author.displayName)}
-                    </AvatarFallback>
-                  </Avatar>
+                  <button
+                    onClick={() => setLocation(`/profile/${msg.author.id}`)}
+                    className="hover-elevate cursor-pointer flex-shrink-0"
+                    data-testid={`button-profile-${msg.author.id}`}
+                  >
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage src={msg.author.photoURL || undefined} />
+                      <AvatarFallback className="text-xs bg-secondary text-secondary-foreground">
+                        {getInitials(msg.author.displayName)}
+                      </AvatarFallback>
+                    </Avatar>
+                  </button>
                   <div className={`flex flex-col ${isOwnMessage ? "items-end" : "items-start"}`}>
                     <div className="flex items-center gap-2 mb-1 flex-wrap">
                       <span className="text-sm font-medium">{msg.author.displayName}</span>
