@@ -186,7 +186,7 @@ export default function ChatPage() {
                             : msg.author.role === "The Council of Snow"
                             ? "bg-blue-50 text-blue-900"
                             : msg.author.role === "The Great Hall of the North"
-                            ? "bg-blue-100 text-blue-900"
+                            ? "bg-blue-50 text-blue-900"
                             : isOwnMessage 
                             ? "bg-primary text-primary-foreground" 
                             : "bg-muted"
