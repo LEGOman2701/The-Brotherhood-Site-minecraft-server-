@@ -330,13 +330,14 @@ export async function registerRoutes(
             };
             await sendDiscordWebhook(webhookUrl, JSON.stringify(embed), true);
           } else {
-            // Feed posts use simple text format with colored emoji square
+            // Feed posts use simple text format with colored emoji square and unique post ID
             const message = post.content.substring(0, 2000);
             let emoji = "⬜"; // Default white square
             if (author.role === "Supreme Leader") emoji = "🟨"; // Yellow square
             else if (author.role === "The Council of Snow" || author.role === "The Great Hall of the North") emoji = "🟦"; // Blue square
             else if (author.role === "admin") emoji = "🟥"; // Red square
-            const threadName = `${emoji} ${author.displayName || "Unknown"} (${author.role || "Member"})`;
+            // Include post ID in thread name to ensure uniqueness
+            const threadName = `${emoji} ${author.displayName || "Unknown"} (${author.role || "Member"}) [#${post.id}]`;
             const threadIdentifier = await sendDiscordWebhook(webhookUrl, message, false, threadName);
             
             // Store the thread identifier (either actual thread ID or thread name for matching)
