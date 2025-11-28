@@ -30,10 +30,10 @@ function getRoleAnsiColor(role?: string | null): string {
 }
 
 // Helper function to send Discord webhooks
-async function sendDiscordWebhook(webhookUrl: string, content: string, isEmbed?: boolean, threadName?: string) {
+async function sendDiscordWebhook(webhookUrl: string, content: string, isEmbed?: boolean, threadName?: string): Promise<string | null> {
   if (!webhookUrl) {
     console.warn("Webhook URL is empty, skipping send");
-    return;
+    return null;
   }
   try {
     const payload: any = isEmbed ? { embeds: [JSON.parse(content)] } : { content };
@@ -49,11 +49,16 @@ async function sendDiscordWebhook(webhookUrl: string, content: string, isEmbed?:
     if (!response.ok) {
       const errorText = await response.text();
       console.error("Discord webhook error:", response.status, response.statusText, "Body:", errorText);
+      return null;
     } else {
+      const data = await response.json();
       console.log("Discord webhook sent successfully");
+      // Return thread ID if it exists (for forum channels)
+      return data.thread_id || null;
     }
   } catch (error) {
     console.error("Failed to send Discord webhook:", error);
+    return null;
   }
 }
 
@@ -308,10 +313,15 @@ export async function registerRoutes(
             const message = post.content.substring(0, 2000);
             let emoji = "⬜"; // Default white square
             if (author.role === "Supreme Leader") emoji = "🟨"; // Yellow square
-            else if (author.role === "Council" || author.role === "Great Hall") emoji = "🟦"; // Blue square
-            else if (author.role === "Admin") emoji = "🟥"; // Red square
+            else if (author.role === "The Council of Snow" || author.role === "The Great Hall of the North") emoji = "🟦"; // Blue square
+            else if (author.role === "admin") emoji = "🟥"; // Red square
             const threadName = `${emoji} ${author.displayName || "Unknown"} (${author.role || "Member"})`;
-            await sendDiscordWebhook(webhookUrl, message, false, threadName);
+            const threadId = await sendDiscordWebhook(webhookUrl, message, false, threadName);
+            
+            // Store the Discord thread ID for future comments
+            if (threadId) {
+              await storage.updatePost(post.id, { discordThreadId: threadId });
+            }
           }
         }
       }
@@ -388,21 +398,31 @@ export async function registerRoutes(
         const author = await storage.getUser(userId);
         const webhookUrl = await storage.getSetting("discord_feed_webhook");
         
-        if (webhookUrl && author) {
+        if (webhookUrl && author && post.discordThreadId) {
           // Format comments same as chat messages with ANSI colors
           const colorCode = getRoleAnsiColor(author.role);
           const ansiText = `\u001b[2;${colorCode}m${author.displayName || "Unknown"}\u001b[0m - ${comment.content.substring(0, 2000)}`;
           const discordMessage = `\`\`\`ansi\n${ansiText}\n\`\`\``;
           
-          // Create thread name based on the post author for routing to correct thread
-          const postAuthor = await storage.getUser(post.authorId);
-          let emoji = "⬜";
-          if (postAuthor?.role === "Supreme Leader") emoji = "🟨";
-          else if (postAuthor?.role === "The Council of Snow" || postAuthor?.role === "The Great Hall of the North") emoji = "🟦";
-          else if (postAuthor?.role === "admin") emoji = "🟥";
-          const threadName = `${emoji} ${postAuthor?.displayName || "Unknown"} (${postAuthor?.role || "Member"})`;
+          // Send comment to the stored Discord thread ID to avoid creating duplicate threads
+          const payload: any = { content: discordMessage };
+          payload.thread_id = post.discordThreadId;
           
-          await sendDiscordWebhook(webhookUrl, discordMessage, false, threadName);
+          try {
+            const response = await fetch(webhookUrl, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(payload),
+            });
+            if (!response.ok) {
+              const errorText = await response.text();
+              console.error("Discord comment webhook error:", response.status, response.statusText, "Body:", errorText);
+            } else {
+              console.log("Discord comment sent to thread successfully");
+            }
+          } catch (error) {
+            console.error("Failed to send Discord comment:", error);
+          }
         }
       }
 

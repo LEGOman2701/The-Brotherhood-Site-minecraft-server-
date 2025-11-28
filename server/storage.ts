@@ -29,6 +29,7 @@ export interface IStorage {
   getPost(id: number, userId?: string): Promise<PostWithAuthor | undefined>;
   getUserPosts(authorId: string): Promise<PostWithAuthor[]>;
   createPost(post: InsertPost): Promise<Post>;
+  updatePost(id: number, data: Partial<InsertPost>): Promise<Post | undefined>;
   deletePost(id: number): Promise<void>;
   
   // Comments
@@ -222,6 +223,15 @@ export class DatabaseStorage implements IStorage {
   async createPost(post: InsertPost): Promise<Post> {
     const [newPost] = await db.insert(posts).values(post).returning();
     return newPost;
+  }
+
+  async updatePost(id: number, data: Partial<InsertPost>): Promise<Post | undefined> {
+    const [updated] = await db
+      .update(posts)
+      .set(data)
+      .where(eq(posts.id, id))
+      .returning();
+    return updated || undefined;
   }
 
   async deletePost(id: number): Promise<void> {
