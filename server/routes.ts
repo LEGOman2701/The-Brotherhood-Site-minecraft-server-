@@ -285,7 +285,7 @@ export async function registerRoutes(
           } else {
             // Feed posts use ANSI colored text format
             const colorCode = getRoleAnsiColor(author.role);
-            const ansiText = `[2;${colorCode}m${author.displayName || "Unknown"}[0m: ${post.content.substring(0, 2000)}`;
+            const ansiText = `\u001b[2;${colorCode}m${author.displayName || "Unknown"}\u001b[0m: ${post.content.substring(0, 2000)}`;
             const discordMessage = `\`\`\`ansi\n${ansiText}\n\`\`\``;
             await sendDiscordWebhook(webhookUrl, discordMessage, false);
           }
@@ -487,7 +487,7 @@ export async function registerRoutes(
       if (webhookUrl && author) {
         // Chat webhook uses ANSI colored text format
         const colorCode = getRoleAnsiColor(author.role);
-        const ansiText = `[2;${colorCode}m${author.displayName || "Unknown"}[0m - ${message.content.substring(0, 2000)}`;
+        const ansiText = `\u001b[2;${colorCode}m${author.displayName || "Unknown"}\u001b[0m - ${message.content.substring(0, 2000)}`;
         const discordMessage = `\`\`\`ansi\n${ansiText}\n\`\`\``;
         await sendDiscordWebhook(webhookUrl, discordMessage, false);
       }
