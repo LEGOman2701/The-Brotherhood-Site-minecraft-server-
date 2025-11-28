@@ -4,7 +4,7 @@ import { CreatePost } from "@/components/create-post";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card } from "@/components/ui/card";
 import { FileText } from "lucide-react";
-import { useSearch } from "@/lib/search-context";
+import { useSearch, fuzzyScore } from "@/lib/search-context";
 import type { PostWithAuthor } from "@shared/schema";
 
 export default function FeedPage() {
@@ -13,13 +13,16 @@ export default function FeedPage() {
   });
   const { searchQuery } = useSearch();
 
-  const filteredPosts = posts?.filter((post) => {
-    const query = searchQuery.toLowerCase();
-    return (
-      post.content.toLowerCase().includes(query) ||
-      post.author.displayName.toLowerCase().includes(query)
-    );
-  }) || [];
+  const filteredPosts = posts
+    ?.map((post) => {
+      const contentScore = fuzzyScore(post.content, searchQuery);
+      const authorScore = fuzzyScore(post.author.displayName, searchQuery);
+      const score = Math.max(contentScore, authorScore);
+      return { post, score };
+    })
+    .filter(({ score }) => score > 0.3 || !searchQuery)
+    .sort((a, b) => b.score - a.score)
+    .map(({ post }) => post) || [];
 
   return (
     <div className="max-w-3xl mx-auto p-4 sm:p-6 space-y-6">

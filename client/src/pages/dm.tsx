@@ -71,26 +71,33 @@ export default function DMPage() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto p-4 sm:p-6 h-[calc(100vh-120px)] flex flex-col">
+    <div className="max-w-2xl mx-auto p-4 sm:p-6 h-[calc(100vh-120px)] flex flex-col bg-background">
       {userLoading ? (
-        <Card className="mb-4">
+        <Card className="mb-4 border-none shadow-sm">
           <CardHeader className="pb-3">
             <Skeleton className="h-6 w-32" />
           </CardHeader>
         </Card>
       ) : otherUser ? (
-        <Card className="mb-4">
+        <Card className="mb-4 border-none shadow-sm">
           <CardHeader className="pb-3">
             <div className="flex items-center gap-3">
-              <Avatar className="h-10 w-10">
+              <Avatar className="h-12 w-12 ring-2 ring-primary/20">
                 <AvatarImage src={otherUser.photoURL || undefined} alt={otherUser.displayName} />
-                <AvatarFallback className="bg-primary text-primary-foreground text-xs">
+                <AvatarFallback className="bg-primary text-primary-foreground text-sm font-semibold">
                   {getInitials(otherUser.displayName)}
                 </AvatarFallback>
               </Avatar>
-              <CardTitle className="text-lg" data-testid="text-dm-user">
-                {otherUser.displayName}
-              </CardTitle>
+              <div>
+                <CardTitle className="text-lg" data-testid="text-dm-user">
+                  {otherUser.displayName}
+                </CardTitle>
+                {otherUser.role && (
+                  <p className="text-xs text-muted-foreground">
+                    {otherUser.role}
+                  </p>
+                )}
+              </div>
             </div>
           </CardHeader>
         </Card>
@@ -147,7 +154,7 @@ export default function DMPage() {
         )}
       </div>
 
-      <div className="flex gap-2">
+      <div className="flex gap-2 items-end">
         <Textarea
           placeholder="Type a message..."
           value={messageContent}
@@ -163,10 +170,12 @@ export default function DMPage() {
         <Button
           onClick={() => sendMutation.mutate()}
           disabled={sendMutation.isPending || !messageContent.trim()}
-          size="icon"
+          size="default"
+          className="gap-2 whitespace-nowrap"
           data-testid="button-send-dm"
         >
           <Send className="h-4 w-4" />
+          <span className="hidden sm:inline">Send</span>
         </Button>
       </div>
     </div>

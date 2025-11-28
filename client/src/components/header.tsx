@@ -88,13 +88,13 @@ export function Header() {
             </Link>
           </nav>
 
-          <div className="hidden md:flex items-center gap-2 flex-1 max-w-md ml-4">
-            <Search className="h-4 w-4 text-muted-foreground" />
+          <div className="hidden md:flex items-center gap-2 flex-1 max-w-md ml-4 rounded-md px-3 py-1.5 bg-muted/50 border border-muted hover:bg-muted/70 transition-colors">
+            <Search className="h-4 w-4 text-muted-foreground flex-shrink-0" />
             <Input
-              placeholder="Search posts..."
+              placeholder="Search posts by content or author..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="border-0 bg-transparent text-sm focus-visible:ring-0"
+              className="border-0 bg-transparent text-sm focus-visible:ring-0 placeholder:text-muted-foreground/70"
               data-testid="input-search"
             />
           </div>
