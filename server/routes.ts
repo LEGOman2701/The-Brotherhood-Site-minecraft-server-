@@ -19,10 +19,10 @@ function getRoleColor(role?: string | null): number {
 }
 
 // Helper function to send Discord webhooks
-async function sendDiscordWebhook(webhookUrl: string, embed: any, threadName?: string) {
+async function sendDiscordWebhook(webhookUrl: string, content: string, isEmbed?: boolean, threadName?: string) {
   if (!webhookUrl) return;
   try {
-    const payload: any = { embeds: [embed] };
+    const payload: any = isEmbed ? { embeds: [JSON.parse(content)] } : { content };
     if (threadName) {
       payload.thread_name = threadName;
     }
@@ -273,19 +273,20 @@ export async function registerRoutes(
         const webhookUrl = await storage.getSetting(webhookKey);
         
         if (webhookUrl && author) {
-          const embed = {
-            title: post.title || (isAdminPost ? "New Announcement" : "New Post"),
-            description: post.content.substring(0, 2000),
-            author: isAdminPost ? undefined : {
-              name: author.displayName || "Unknown",
-              icon_url: author.photoURL || undefined,
-            },
-            color: isAdminPost ? 16711680 : getRoleColor(author.role),
-            timestamp: post.createdAt?.toISOString(),
-          };
-          // For feed posts, use forum channel format with username as thread title
-          const threadName = isAdminPost ? undefined : author.displayName || "Unknown";
-          await sendDiscordWebhook(webhookUrl, embed, threadName);
+          if (isAdminPost) {
+            // Announcements use embeds with custom title
+            const embed = {
+              title: post.title || "New Announcement",
+              description: post.content.substring(0, 2000),
+              color: 16711680,
+              timestamp: post.createdAt?.toISOString(),
+            };
+            await sendDiscordWebhook(webhookUrl, JSON.stringify(embed), true);
+          } else {
+            // Feed posts use simple text format
+            const message = `**${author.displayName || "Unknown"}**: ${post.content.substring(0, 2000)}`;
+            await sendDiscordWebhook(webhookUrl, message, false);
+          }
         }
       }
 
