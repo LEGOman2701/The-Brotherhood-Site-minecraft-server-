@@ -129,7 +129,7 @@ export default function ProfilePage() {
                 Member since {formatDistanceToNow(new Date(displayUser.createdAt), { addSuffix: true })}
               </span>
             </div>
-            {!isOwnProfile && (isOwner || user?.hasAdminAccess) && (
+            {(isOwner || user?.hasAdminAccess) && (
               <div className="pt-2 border-t">
                 <p className="text-xs font-semibold mb-2 text-muted-foreground">Assign Role</p>
                 <div className="flex flex-wrap gap-2">
