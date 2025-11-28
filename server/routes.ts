@@ -476,10 +476,6 @@ export async function registerRoutes(
         return res.status(400).json({ error: "Content is required" });
       }
 
-      if (senderId === recipientId) {
-        return res.status(400).json({ error: "Cannot message yourself" });
-      }
-
       const message = await storage.createDirectMessage({
         content: content.trim(),
         senderId,

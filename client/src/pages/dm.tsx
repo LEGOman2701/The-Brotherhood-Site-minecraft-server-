@@ -62,7 +62,7 @@ export default function DMPage() {
     );
   }
 
-  if (!otherUserId || otherUserId === user.id) {
+  if (!otherUserId) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="text-muted-foreground">Invalid conversation</div>
