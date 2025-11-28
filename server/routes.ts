@@ -20,17 +20,23 @@ function getRoleAnsiColor(role?: string | null): string {
 
 // Helper function to send Discord webhooks
 async function sendDiscordWebhook(webhookUrl: string, content: string, isEmbed?: boolean, threadName?: string) {
-  if (!webhookUrl) return;
+  if (!webhookUrl) {
+    console.warn("Webhook URL is empty, skipping send");
+    return;
+  }
   try {
     const payload: any = isEmbed ? { embeds: [JSON.parse(content)] } : { content };
     if (threadName) {
       payload.thread_name = threadName;
     }
-    await fetch(webhookUrl, {
+    const response = await fetch(webhookUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
+    if (!response.ok) {
+      console.error("Discord webhook error:", response.status, response.statusText);
+    }
   } catch (error) {
     console.error("Failed to send Discord webhook:", error);
   }
@@ -283,10 +289,12 @@ export async function registerRoutes(
             };
             await sendDiscordWebhook(webhookUrl, JSON.stringify(embed), true);
           } else {
-            // Feed posts use ANSI colored text format
+            // Feed posts use ANSI colored text format with name and role
             const colorCode = getRoleAnsiColor(author.role);
-            const ansiText = `\u001b[2;${colorCode}m${author.displayName || "Unknown"}\u001b[0m: ${post.content.substring(0, 2000)}`;
+            const roleDisplay = author.role || "Member";
+            const ansiText = `\u001b[2;${colorCode}m${author.displayName || "Unknown"} (${roleDisplay})\u001b[0m: ${post.content.substring(0, 2000)}`;
             const discordMessage = `\`\`\`ansi\n${ansiText}\n\`\`\``;
+            console.log("Sending feed webhook:", { webhookUrl: webhookUrl?.substring(0, 50), discordMessage });
             await sendDiscordWebhook(webhookUrl, discordMessage, false);
           }
         }
