@@ -7,14 +7,29 @@ import { storage } from "./storage";
 import { verifyIdToken, isFirebaseAdminInitialized } from "./firebase-admin";
 import bcrypt from "bcrypt";
 
+// Role to Discord color mapping
+function getRoleColor(role?: string | null): number {
+  switch (role) {
+    case "Supreme Leader": return 16776960; // Yellow
+    case "The Council of Snow": return 3381759; // Light Blue
+    case "The Great Hall of the North": return 25600; // Dark Blue
+    case "admin": return 16711680; // Red
+    default: return 3447003; // Default blue
+  }
+}
+
 // Helper function to send Discord webhooks
-async function sendDiscordWebhook(webhookUrl: string, embed: any) {
+async function sendDiscordWebhook(webhookUrl: string, embed: any, threadName?: string) {
   if (!webhookUrl) return;
   try {
+    const payload: any = { embeds: [embed] };
+    if (threadName) {
+      payload.thread_name = threadName;
+    }
     await fetch(webhookUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ embeds: [embed] }),
+      body: JSON.stringify(payload),
     });
   } catch (error) {
     console.error("Failed to send Discord webhook:", error);
@@ -265,10 +280,12 @@ export async function registerRoutes(
               name: author.displayName || "Unknown",
               icon_url: author.photoURL || undefined,
             },
-            color: isAdminPost ? 16711680 : 3447003, // Red for announcements, blue for posts
+            color: isAdminPost ? 16711680 : getRoleColor(author.role),
             timestamp: post.createdAt?.toISOString(),
           };
-          await sendDiscordWebhook(webhookUrl, embed);
+          // For feed posts, use forum channel format with username as thread title
+          const threadName = isAdminPost ? undefined : author.displayName || "Unknown";
+          await sendDiscordWebhook(webhookUrl, embed, threadName);
         }
       }
 
@@ -465,14 +482,12 @@ export async function registerRoutes(
       const webhookUrl = await storage.getSetting("discord_chat_webhook");
       
       if (webhookUrl && author) {
+        // Chat webhook uses colored text format: (username) - (message)
+        const roleColor = getRoleColor(author.role);
+        const hexColor = roleColor.toString(16).padStart(6, '0');
         const embed = {
-          title: "New Chat Message",
-          description: message.content.substring(0, 2000),
-          author: {
-            name: author.displayName || "Unknown",
-            icon_url: author.photoURL || undefined,
-          },
-          color: 5793266, // Light blue for chat
+          description: `**${author.displayName || "Unknown"}** - ${message.content.substring(0, 2000)}`,
+          color: roleColor,
           timestamp: message.createdAt?.toISOString(),
         };
         await sendDiscordWebhook(webhookUrl, embed);
