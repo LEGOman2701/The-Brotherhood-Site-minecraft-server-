@@ -10,10 +10,10 @@ import bcrypt from "bcrypt";
 // Role to Discord embed color mapping (decimal)
 function getRoleColor(role?: string | null): number {
   switch (role) {
-    case "Supreme Leader": return 16776960; // Yellow
-    case "The Council of Snow": return 3381759; // Light Blue
-    case "The Great Hall of the North": return 25600; // Dark Blue
-    case "admin": return 16711680; // Red
+    case "Supreme Leader": return 16776960; // Yellow (#FFD700)
+    case "The Council of Snow": return 8844475; // Light Blue (#87CEEB)
+    case "The Great Hall of the North": return 139; // Dark Blue (#00008B)
+    case "admin": return 16711680; // Red (#FF0000)
     default: return 3447003; // Default blue
   }
 }
