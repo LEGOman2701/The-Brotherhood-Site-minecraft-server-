@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,14 +11,16 @@ import {
 import { useAuth } from "@/lib/auth-context";
 import { logOut } from "@/lib/firebase";
 import { useLocation, Link } from "wouter";
-import { Moon, Sun, Settings, LogOut, User } from "lucide-react";
+import { Moon, Sun, Settings, LogOut, User, Search } from "lucide-react";
 import { useTheme } from "@/components/theme-provider";
+import { useSearch } from "@/lib/search-context";
 import brotherhoodFlag from "@assets/flag png_1764277483845.png";
 
 export function Header() {
   const { user, isOwner } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const [location, setLocation] = useLocation();
+  const { searchQuery, setSearchQuery } = useSearch();
 
   const handleLogout = async () => {
     try {
@@ -54,35 +57,48 @@ export function Header() {
           </Link>
         </div>
 
-        <nav className="flex items-center gap-1 sm:gap-2">
-          <Link href="/">
-            <Button 
-              variant={location === "/" ? "secondary" : "ghost"} 
-              size="sm"
-              data-testid="link-feed"
-            >
-              Feed
-            </Button>
-          </Link>
-          <Link href="/admin">
-            <Button 
-              variant={location === "/admin" ? "secondary" : "ghost"} 
-              size="sm"
-              data-testid="link-admin"
-            >
-              Announcements
-            </Button>
-          </Link>
-          <Link href="/chat">
-            <Button 
-              variant={location === "/chat" ? "secondary" : "ghost"} 
-              size="sm"
-              data-testid="link-chat"
-            >
-              Chat
-            </Button>
-          </Link>
-        </nav>
+        <div className="flex items-center gap-4 flex-1">
+          <nav className="flex items-center gap-1 sm:gap-2">
+            <Link href="/">
+              <Button 
+                variant={location === "/" ? "secondary" : "ghost"} 
+                size="sm"
+                data-testid="link-feed"
+              >
+                Feed
+              </Button>
+            </Link>
+            <Link href="/admin">
+              <Button 
+                variant={location === "/admin" ? "secondary" : "ghost"} 
+                size="sm"
+                data-testid="link-admin"
+              >
+                Announcements
+              </Button>
+            </Link>
+            <Link href="/chat">
+              <Button 
+                variant={location === "/chat" ? "secondary" : "ghost"} 
+                size="sm"
+                data-testid="link-chat"
+              >
+                Chat
+              </Button>
+            </Link>
+          </nav>
+
+          <div className="hidden md:flex items-center gap-2 flex-1 max-w-md ml-4">
+            <Search className="h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search posts..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="border-0 bg-transparent text-sm focus-visible:ring-0"
+              data-testid="input-search"
+            />
+          </div>
+        </div>
 
         <div className="flex items-center gap-2">
           <Button 

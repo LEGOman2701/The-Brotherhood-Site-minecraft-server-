@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/theme-provider";
 import { AuthProvider, useAuth } from "@/lib/auth-context";
+import { SearchProvider } from "@/lib/search-context";
 import { Header } from "@/components/header";
 import LoginPage from "@/pages/login";
 import FeedPage from "@/pages/feed";
@@ -13,6 +14,18 @@ import ChatPage from "@/pages/chat";
 import SettingsPage from "@/pages/settings";
 import ProfilePage from "@/pages/profile";
 import NotFound from "@/pages/not-found";
+
+// Suppress Vite HMR connection errors in development
+if (typeof window !== "undefined") {
+  window.addEventListener("unhandledrejection", (event) => {
+    if (
+      event.reason?.message?.includes("Failed to construct 'WebSocket'") &&
+      event.reason?.message?.includes("localhost:undefined")
+    ) {
+      event.preventDefault();
+    }
+  });
+}
 
 function ProtectedRoute({ component: Component }: { component: () => JSX.Element }) {
   const { user, loading } = useAuth();
@@ -80,8 +93,10 @@ function App() {
       <ThemeProvider>
         <TooltipProvider>
           <AuthProvider>
-            <Router />
-            <Toaster />
+            <SearchProvider>
+              <Router />
+              <Toaster />
+            </SearchProvider>
           </AuthProvider>
         </TooltipProvider>
       </ThemeProvider>
