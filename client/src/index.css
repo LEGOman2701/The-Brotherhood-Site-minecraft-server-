@@ -493,7 +493,7 @@ button, [role="button"], .interactive-element {
 }
 
 button:hover:not(:disabled), [role="button"]:hover:not(:disabled) {
-  transform: scale(1.05);
+  transform: scale(1.02);
 }
 
 button:active:not(:disabled), [role="button"]:active:not(:disabled) {
