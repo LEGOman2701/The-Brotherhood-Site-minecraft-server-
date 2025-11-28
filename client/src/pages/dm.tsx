@@ -21,12 +21,12 @@ export default function DMPage() {
   const [messageContent, setMessageContent] = useState("");
 
   const { data: otherUser, isLoading: userLoading } = useQuery<UserType>({
-    queryKey: ["/api/users/:userId", otherUserId],
+    queryKey: [`/api/users/${otherUserId}`],
     enabled: !!otherUserId && otherUserId !== user?.id,
   });
 
   const { data: messages, isLoading: messagesLoading } = useQuery<DirectMessageWithAuthor[]>({
-    queryKey: ["/api/dm/:userId", otherUserId],
+    queryKey: [`/api/dm/${otherUserId}`],
     enabled: !!user && !!otherUserId,
   });
 
@@ -37,7 +37,7 @@ export default function DMPage() {
     },
     onSuccess: () => {
       setMessageContent("");
-      queryClient.invalidateQueries({ queryKey: ["/api/dm/:userId", otherUserId] });
+      queryClient.invalidateQueries({ queryKey: [`/api/dm/${otherUserId}`] });
       toast({ title: "Message sent" });
     },
     onError: () => {
