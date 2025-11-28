@@ -12,6 +12,7 @@ export const users = pgTable("users", {
   photoURL: text("photo_url"),
   isOwner: boolean("is_owner").default(false).notNull(),
   hasAdminAccess: boolean("has_admin_access").default(false).notNull(),
+  role: text("role"), // Role in the government structure (Supreme Leader, The Council of Snow, The Great Hall of the North)
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 

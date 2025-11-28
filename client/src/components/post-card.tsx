@@ -105,7 +105,7 @@ export function PostCard({ post }: PostCardProps) {
             </Avatar>
           </Link>
           <div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <span className="font-semibold text-sm" data-testid={`text-author-${post.id}`}>
                 {post.author.displayName}
               </span>
@@ -117,6 +117,11 @@ export function PostCard({ post }: PostCardProps) {
               {post.author.isOwner && (
                 <Badge variant="secondary" className="text-xs">
                   Owner
+                </Badge>
+              )}
+              {post.author.role && (
+                <Badge className={`text-xs ${post.author.role === "Supreme Leader" ? "bg-yellow-500 text-yellow-900" : post.author.role === "The Council of Snow" ? "bg-blue-300 text-blue-900" : "bg-blue-900 text-blue-100"}`}>
+                  {post.author.role}
                 </Badge>
               )}
             </div>

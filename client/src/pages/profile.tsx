@@ -1,17 +1,27 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PostCard } from "@/components/post-card";
 import { User, Mail, Calendar, FileText } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { useAuth } from "@/lib/auth-context";
 import { useRoute } from "wouter";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 import type { PostWithAuthor, User as UserType } from "@shared/schema";
 
+const ROLES = [
+  { id: "Supreme Leader", label: "Supreme Leader", color: "bg-yellow-500" },
+  { id: "The Council of Snow", label: "The Council of Snow", color: "bg-blue-300" },
+  { id: "The Great Hall of the North", label: "The Great Hall of the North", color: "bg-blue-900" },
+];
+
 export default function ProfilePage() {
-  const { user } = useAuth();
+  const { user, isOwner } = useAuth();
+  const { toast } = useToast();
   const [match, params] = useRoute("/profile/:userId");
   const userId = params?.userId;
   const isOwnProfile = !userId || userId === user?.id;
@@ -24,6 +34,32 @@ export default function ProfilePage() {
   const { data: profileUser, isLoading: profileLoading } = useQuery<UserType>({
     queryKey: ["/api/users/:userId", userId],
     enabled: !!userId && userId !== user?.id,
+  });
+
+  const grantRoleMutation = useMutation({
+    mutationFn: async (role: string) => {
+      return apiRequest("POST", `/api/users/${userId}/role`, { role });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/users/:userId", userId] });
+      toast({ title: "Role granted successfully" });
+    },
+    onError: () => {
+      toast({ title: "Failed to grant role", variant: "destructive" });
+    },
+  });
+
+  const revokeRoleMutation = useMutation({
+    mutationFn: async () => {
+      return apiRequest("DELETE", `/api/users/${userId}/role`, {});
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/users/:userId", userId] });
+      toast({ title: "Role revoked successfully" });
+    },
+    onError: () => {
+      toast({ title: "Failed to revoke role", variant: "destructive" });
+    },
   });
 
   const getInitials = (name: string) => {
@@ -73,11 +109,16 @@ export default function ProfilePage() {
                   {displayUser.hasAdminAccess && !displayUser.isOwner && (
                     <Badge variant="secondary">Admin</Badge>
                   )}
+                  {displayUser.role && (
+                    <Badge className={displayUser.role === "Supreme Leader" ? "bg-yellow-500 text-yellow-900" : displayUser.role === "The Council of Snow" ? "bg-blue-300 text-blue-900" : "bg-blue-900 text-blue-100"}>
+                      {displayUser.role}
+                    </Badge>
+                  )}
                 </div>
               </div>
             </div>
           </CardHeader>
-          <CardContent className="space-y-3">
+          <CardContent className="space-y-4">
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Mail className="h-4 w-4" />
               <span data-testid="text-profile-email">{displayUser.email}</span>
@@ -88,6 +129,36 @@ export default function ProfilePage() {
                 Member since {formatDistanceToNow(new Date(displayUser.createdAt), { addSuffix: true })}
               </span>
             </div>
+            {!isOwnProfile && (isOwner || user?.hasAdminAccess) && (
+              <div className="pt-2 border-t">
+                <p className="text-xs font-semibold mb-2 text-muted-foreground">Assign Role</p>
+                <div className="flex flex-wrap gap-2">
+                  {ROLES.map((role) => (
+                    <Button
+                      key={role.id}
+                      size="sm"
+                      variant="outline"
+                      onClick={() => grantRoleMutation.mutate(role.id)}
+                      disabled={grantRoleMutation.isPending || displayUser.role === role.id}
+                      data-testid={`button-role-${role.id}`}
+                    >
+                      {role.label}
+                    </Button>
+                  ))}
+                  {displayUser.role && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => revokeRoleMutation.mutate()}
+                      disabled={revokeRoleMutation.isPending}
+                      data-testid="button-revoke-role"
+                    >
+                      Clear Role
+                    </Button>
+                  )}
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
       ) : (

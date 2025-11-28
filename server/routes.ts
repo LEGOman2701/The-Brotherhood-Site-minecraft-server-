@@ -349,6 +349,53 @@ export async function registerRoutes(
     }
   });
 
+  // Grant role to user
+  app.post("/api/users/:userId/role", authMiddleware, async (req, res) => {
+    try {
+      const userId = req.userId!;
+      const targetUserId = req.params.userId;
+      const { role } = req.body;
+      
+      const user = await storage.getUser(userId);
+      if (!user?.isOwner && !user?.hasAdminAccess) {
+        return res.status(403).json({ error: "Admin access required" });
+      }
+      
+      const updated = await storage.grantRole(targetUserId, role);
+      if (!updated) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      
+      res.json(updated);
+    } catch (error) {
+      console.error("Grant role error:", error);
+      res.status(500).json({ error: "Failed to grant role" });
+    }
+  });
+
+  // Revoke role from user
+  app.delete("/api/users/:userId/role", authMiddleware, async (req, res) => {
+    try {
+      const userId = req.userId!;
+      const targetUserId = req.params.userId;
+      
+      const user = await storage.getUser(userId);
+      if (!user?.isOwner && !user?.hasAdminAccess) {
+        return res.status(403).json({ error: "Admin access required" });
+      }
+      
+      const updated = await storage.revokeRole(targetUserId);
+      if (!updated) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      
+      res.json(updated);
+    } catch (error) {
+      console.error("Revoke role error:", error);
+      res.status(500).json({ error: "Failed to revoke role" });
+    }
+  });
+
   // Get chat messages
   app.get("/api/chat", authMiddleware, async (req, res) => {
     try {

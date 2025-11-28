@@ -19,6 +19,8 @@ export interface IStorage {
   getUserByEmail(email: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: string, data: Partial<InsertUser>): Promise<User | undefined>;
+  grantRole(userId: string, role: string): Promise<User | undefined>;
+  revokeRole(userId: string): Promise<User | undefined>;
   
   // Posts
   getPosts(isAdminPost: boolean, userId?: string): Promise<PostWithAuthor[]>;
@@ -75,6 +77,24 @@ export class DatabaseStorage implements IStorage {
       .update(users)
       .set(data)
       .where(eq(users.id, id))
+      .returning();
+    return user || undefined;
+  }
+
+  async grantRole(userId: string, role: string): Promise<User | undefined> {
+    const [user] = await db
+      .update(users)
+      .set({ role })
+      .where(eq(users.id, userId))
+      .returning();
+    return user || undefined;
+  }
+
+  async revokeRole(userId: string): Promise<User | undefined> {
+    const [user] = await db
+      .update(users)
+      .set({ role: null })
+      .where(eq(users.id, userId))
       .returning();
     return user || undefined;
   }

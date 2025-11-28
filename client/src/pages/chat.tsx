@@ -167,8 +167,13 @@ export default function ChatPage() {
                     </AvatarFallback>
                   </Avatar>
                   <div className={`flex flex-col ${isOwnMessage ? "items-end" : "items-start"}`}>
-                    <div className="flex items-center gap-2 mb-1">
+                    <div className="flex items-center gap-2 mb-1 flex-wrap">
                       <span className="text-sm font-medium">{msg.author.displayName}</span>
+                      {msg.author.role && (
+                        <span className={`text-xs px-1.5 py-0.5 rounded ${msg.author.role === "Supreme Leader" ? "bg-yellow-500 text-yellow-900" : msg.author.role === "The Council of Snow" ? "bg-blue-300 text-blue-900" : "bg-blue-900 text-blue-100"}`}>
+                          {msg.author.role}
+                        </span>
+                      )}
                       <span className="text-xs text-muted-foreground">
                         {formatDistanceToNow(new Date(msg.createdAt), { addSuffix: true })}
                       </span>
