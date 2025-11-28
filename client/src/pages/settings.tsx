@@ -84,9 +84,9 @@ export default function SettingsPage() {
       </div>
 
       <Tabs defaultValue="general" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className={`grid w-full ${(isOwner || user?.role === "Supreme Leader") ? "grid-cols-2" : "grid-cols-1"}`}>
           <TabsTrigger value="general">General</TabsTrigger>
-          {isOwner && <TabsTrigger value="admin">Admin</TabsTrigger>}
+          {(isOwner || user?.role === "Supreme Leader") && <TabsTrigger value="admin">Admin</TabsTrigger>}
         </TabsList>
 
         <TabsContent value="general" className="space-y-6">
@@ -187,7 +187,7 @@ export default function SettingsPage() {
           </Card>
         </TabsContent>
 
-        {isOwner && (
+        {(isOwner || user?.role === "Supreme Leader") && (
           <TabsContent value="admin" className="space-y-6">
             <Card data-testid="card-admin-password">
         <CardHeader>
