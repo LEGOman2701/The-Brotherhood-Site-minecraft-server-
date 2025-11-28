@@ -93,7 +93,7 @@ export function PostCard({ post }: PostCardProps) {
   const canDelete = isOwner || post.authorId === user?.id;
 
   return (
-    <Card className="overflow-visible" data-testid={`card-post-${post.id}`}>
+    <Card className={`overflow-visible ${post.author.role === "Supreme Leader" ? "bg-yellow-200" : post.author.role === "The Council of Snow" ? "bg-blue-200" : post.author.role === "The Great Hall of the North" ? "bg-blue-600" : ""}`} data-testid={`card-post-${post.id}`}>
       <CardHeader className="flex flex-row items-start justify-between gap-4 space-y-0 pb-3">
         <div className="flex items-center gap-3">
           <Link href={`/profile/${post.author.id}`}>
@@ -143,7 +143,7 @@ export function PostCard({ post }: PostCardProps) {
         )}
       </CardHeader>
 
-      <CardContent className={`pb-3 ${post.author.role === "Supreme Leader" ? "bg-yellow-200" : post.author.role === "The Council of Snow" ? "bg-blue-200" : post.author.role === "The Great Hall of the North" ? "bg-blue-600" : ""}`}>
+      <CardContent className="pb-3">
         <p className="text-sm whitespace-pre-wrap" data-testid={`text-content-${post.id}`}>
           {post.content}
         </p>
