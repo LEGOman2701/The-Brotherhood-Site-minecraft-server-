@@ -39,18 +39,25 @@ export default function SettingsPage() {
     enabled: isOwner,
   });
 
-  const { data: webhooks, isLoading: loadingWebhooks } = useQuery<{ feedWebhook: string; announcementsWebhook: string; chatWebhook: string }>({
+  const { data: webhooks, isLoading: loadingWebhooks, refetch: refetchWebhooks } = useQuery<{ feedWebhook: string; announcementsWebhook: string; chatWebhook: string }>({
     queryKey: ["/api/admin/webhooks"],
-    enabled: isOwner,
+    enabled: isOwner || user?.role === "Supreme Leader",
   });
 
   useEffect(() => {
     if (webhooks) {
-      setFeedWebhook(webhooks.feedWebhook);
-      setAnnouncementsWebhook(webhooks.announcementsWebhook);
-      setChatWebhook(webhooks.chatWebhook);
+      setFeedWebhook(webhooks.feedWebhook || "");
+      setAnnouncementsWebhook(webhooks.announcementsWebhook || "");
+      setChatWebhook(webhooks.chatWebhook || "");
     }
   }, [webhooks]);
+
+  // Refetch webhooks when user becomes available
+  useEffect(() => {
+    if (user && (isOwner || user?.role === "Supreme Leader")) {
+      refetchWebhooks();
+    }
+  }, [user, isOwner, refetchWebhooks]);
 
   const setPasswordMutation = useMutation({
     mutationFn: async (password: string) => {
