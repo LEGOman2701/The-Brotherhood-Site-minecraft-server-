@@ -459,6 +459,24 @@ export async function registerRoutes(
         fileAttachmentIds: fileAttachmentIds || undefined,
       });
 
+      // Send Discord webhook if configured
+      const author = await storage.getUser(userId);
+      const webhookUrl = await storage.getSetting("discord_chat_webhook");
+      
+      if (webhookUrl && author) {
+        const embed = {
+          title: "New Chat Message",
+          description: message.content.substring(0, 2000),
+          author: {
+            name: author.displayName || "Unknown",
+            icon_url: author.photoURL || undefined,
+          },
+          color: 5793266, // Light blue for chat
+          timestamp: message.createdAt?.toISOString(),
+        };
+        await sendDiscordWebhook(webhookUrl, embed);
+      }
+
       // Broadcast to all WebSocket clients
       broadcast({ type: "chat_message", message });
 
@@ -596,6 +614,60 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Unlock admin error:", error);
       res.status(500).json({ error: "Failed to unlock admin" });
+    }
+  });
+
+  // Get Discord webhook URLs (owner only)
+  app.get("/api/admin/webhooks", authMiddleware, async (req, res) => {
+    try {
+      const userId = req.userId!;
+      const user = await storage.getUser(userId);
+      
+      if (!user?.isOwner) {
+        return res.status(403).json({ error: "Owner access required" });
+      }
+
+      const feedWebhook = await storage.getSetting("discord_feed_webhook");
+      const announcementsWebhook = await storage.getSetting("discord_announcements_webhook");
+      const chatWebhook = await storage.getSetting("discord_chat_webhook");
+
+      res.json({
+        feedWebhook: feedWebhook || "",
+        announcementsWebhook: announcementsWebhook || "",
+        chatWebhook: chatWebhook || "",
+      });
+    } catch (error) {
+      console.error("Get webhooks error:", error);
+      res.status(500).json({ error: "Failed to get webhooks" });
+    }
+  });
+
+  // Set Discord webhook URLs (owner only)
+  app.post("/api/admin/webhooks", authMiddleware, async (req, res) => {
+    try {
+      const userId = req.userId!;
+      const user = await storage.getUser(userId);
+      
+      if (!user?.isOwner) {
+        return res.status(403).json({ error: "Owner access required" });
+      }
+
+      const { feedWebhook, announcementsWebhook, chatWebhook } = req.body;
+
+      if (feedWebhook) {
+        await storage.setSetting("discord_feed_webhook", feedWebhook);
+      }
+      if (announcementsWebhook) {
+        await storage.setSetting("discord_announcements_webhook", announcementsWebhook);
+      }
+      if (chatWebhook) {
+        await storage.setSetting("discord_chat_webhook", chatWebhook);
+      }
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Set webhooks error:", error);
+      res.status(500).json({ error: "Failed to set webhooks" });
     }
   });
 

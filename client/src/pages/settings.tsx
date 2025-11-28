@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Settings, Key, Save, Loader2, CheckCircle, AlertCircle, Sliders } from "lucide-react";
+import { Settings, Key, Save, Loader2, CheckCircle, AlertCircle, Sliders, MessageSquare } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { useLocation } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
@@ -23,6 +23,9 @@ export default function SettingsPage() {
   const { preferences, setTextSize, setCompactMode, setShowAnimations } = usePreferences();
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [feedWebhook, setFeedWebhook] = useState("");
+  const [announcementsWebhook, setAnnouncementsWebhook] = useState("");
+  const [chatWebhook, setChatWebhook] = useState("");
 
   // Redirect if not logged in
   useEffect(() => {
@@ -36,6 +39,19 @@ export default function SettingsPage() {
     enabled: isOwner,
   });
 
+  const { data: webhooks, isLoading: loadingWebhooks } = useQuery<{ feedWebhook: string; announcementsWebhook: string; chatWebhook: string }>({
+    queryKey: ["/api/admin/webhooks"],
+    enabled: isOwner,
+  });
+
+  useEffect(() => {
+    if (webhooks) {
+      setFeedWebhook(webhooks.feedWebhook);
+      setAnnouncementsWebhook(webhooks.announcementsWebhook);
+      setChatWebhook(webhooks.chatWebhook);
+    }
+  }, [webhooks]);
+
   const setPasswordMutation = useMutation({
     mutationFn: async (password: string) => {
       return apiRequest("POST", "/api/admin/set-password", { password });
@@ -47,6 +63,22 @@ export default function SettingsPage() {
     },
     onError: () => {
       toast({ title: "Failed to update password", variant: "destructive" });
+    },
+  });
+
+  const setWebhooksMutation = useMutation({
+    mutationFn: async () => {
+      return apiRequest("POST", "/api/admin/webhooks", {
+        feedWebhook,
+        announcementsWebhook,
+        chatWebhook,
+      });
+    },
+    onSuccess: () => {
+      toast({ title: "Discord webhooks updated successfully!" });
+    },
+    onError: () => {
+      toast({ title: "Failed to update webhooks", variant: "destructive" });
     },
   });
 
@@ -272,6 +304,84 @@ export default function SettingsPage() {
                 <p>
                   As an owner (TheBrotherhoodOfAlaska@outlook.com or 2thumbsupgames@gmail.com), you always have admin access and can change this password at any time.
                 </p>
+              </CardContent>
+            </Card>
+
+            <Card data-testid="card-discord-webhooks">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <MessageSquare className="h-5 w-5" />
+                  Discord Webhooks
+                </CardTitle>
+                <CardDescription>
+                  Send posts, announcements, and chat messages to Discord channels
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {loadingWebhooks ? (
+                  <div className="text-muted-foreground animate-pulse">Loading webhooks...</div>
+                ) : (
+                  <>
+                    <div className="space-y-2">
+                      <Label htmlFor="feed-webhook">Feed Posts Webhook URL</Label>
+                      <Input
+                        id="feed-webhook"
+                        type="text"
+                        placeholder="https://discord.com/api/webhooks/..."
+                        value={feedWebhook}
+                        onChange={(e) => setFeedWebhook(e.target.value)}
+                        data-testid="input-feed-webhook"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Posts will be sent with author information
+                      </p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="announcements-webhook">Announcements Webhook URL</Label>
+                      <Input
+                        id="announcements-webhook"
+                        type="text"
+                        placeholder="https://discord.com/api/webhooks/..."
+                        value={announcementsWebhook}
+                        onChange={(e) => setAnnouncementsWebhook(e.target.value)}
+                        data-testid="input-announcements-webhook"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Announcements will be sent without author information
+                      </p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="chat-webhook">Chat Messages Webhook URL</Label>
+                      <Input
+                        id="chat-webhook"
+                        type="text"
+                        placeholder="https://discord.com/api/webhooks/..."
+                        value={chatWebhook}
+                        onChange={(e) => setChatWebhook(e.target.value)}
+                        data-testid="input-chat-webhook"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Chat messages will be sent with author information
+                      </p>
+                    </div>
+
+                    <Button 
+                      onClick={() => setWebhooksMutation.mutate()}
+                      disabled={setWebhooksMutation.isPending}
+                      className="gap-2"
+                      data-testid="button-save-webhooks"
+                    >
+                      {setWebhooksMutation.isPending ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Save className="h-4 w-4" />
+                      )}
+                      Save Discord Webhooks
+                    </Button>
+                  </>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
