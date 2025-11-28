@@ -4,26 +4,32 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Settings, Key, Save, Loader2, CheckCircle, AlertCircle } from "lucide-react";
+import { Settings, Key, Save, Loader2, CheckCircle, AlertCircle, Sliders } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { useLocation } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useTheme } from "@/components/theme-provider";
+import { usePreferences, type TextSize } from "@/lib/preferences-context";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Switch } from "@/components/ui/switch";
 
 export default function SettingsPage() {
   const { user, isOwner, loading } = useAuth();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  const { theme, toggleTheme } = useTheme();
+  const { preferences, setTextSize, setCompactMode, setShowAnimations } = usePreferences();
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
-  // Redirect non-owners
+  // Redirect if not logged in
   useEffect(() => {
-    if (!loading && (!user || !isOwner)) {
-      setLocation("/");
+    if (!loading && !user) {
+      setLocation("/login");
     }
-  }, [user, isOwner, loading, setLocation]);
+  }, [user, loading, setLocation]);
 
   const { data: hasPassword, isLoading: checkingPassword } = useQuery<{ hasPassword: boolean }>({
     queryKey: ["/api/admin/check-password"],
@@ -60,7 +66,7 @@ export default function SettingsPage() {
     setPasswordMutation.mutate(newPassword);
   };
 
-  if (loading || !isOwner) {
+  if (loading || !user) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="animate-pulse text-muted-foreground">Loading...</div>
@@ -69,18 +75,121 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto p-4 sm:p-6 space-y-6">
-      <div className="flex items-center gap-3 mb-2">
+    <div className="max-w-3xl mx-auto p-4 sm:p-6 space-y-6">
+      <div className="flex items-center gap-3 mb-6">
         <Settings className="h-6 w-6 text-primary" />
         <h1 className="text-2xl font-bold" data-testid="text-settings-title">
-          Admin Settings
+          Settings
         </h1>
       </div>
-      <p className="text-muted-foreground text-sm mb-6">
-        Owner-only settings for The Brotherhood
-      </p>
 
-      <Card data-testid="card-admin-password">
+      <Tabs defaultValue="general" className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="general">General</TabsTrigger>
+          {isOwner && <TabsTrigger value="admin">Admin</TabsTrigger>}
+        </TabsList>
+
+        <TabsContent value="general" className="space-y-6">
+          {/* Theme Settings */}
+          <Card data-testid="card-theme-settings">
+            <CardHeader>
+              <CardTitle className="text-lg">Theme</CardTitle>
+              <CardDescription>Customize your display preferences</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label className="text-base font-medium">Dark Mode</Label>
+                  <p className="text-sm text-muted-foreground">
+                    {theme === "dark" ? "Currently using dark theme" : "Currently using light theme"}
+                  </p>
+                </div>
+                <Button
+                  variant="outline"
+                  onClick={toggleTheme}
+                  className="gap-2"
+                  data-testid="button-toggle-theme"
+                >
+                  {theme === "dark" ? "Light" : "Dark"}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Text Size Settings */}
+          <Card data-testid="card-text-size">
+            <CardHeader>
+              <CardTitle className="text-lg">Text Size</CardTitle>
+              <CardDescription>Adjust text size throughout the app</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-3">
+                {["small", "normal", "large"].map((size) => (
+                  <Button
+                    key={size}
+                    variant={preferences.textSize === size ? "default" : "outline"}
+                    className="w-full justify-start gap-3"
+                    onClick={() => setTextSize(size as TextSize)}
+                    data-testid={`button-text-size-${size}`}
+                  >
+                    <span
+                      className={`capitalize ${
+                        size === "small"
+                          ? "text-xs"
+                          : size === "large"
+                            ? "text-lg"
+                            : "text-base"
+                      }`}
+                    >
+                      {size}
+                    </span>
+                  </Button>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Display Settings */}
+          <Card data-testid="card-display-settings">
+            <CardHeader>
+              <CardTitle className="text-lg">Display</CardTitle>
+              <CardDescription>Adjust how content is displayed</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label className="text-base font-medium">Compact Mode</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Reduce spacing and padding for a denser layout
+                  </p>
+                </div>
+                <Switch
+                  checked={preferences.compactMode}
+                  onCheckedChange={setCompactMode}
+                  data-testid="switch-compact-mode"
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label className="text-base font-medium">Animations</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Show smooth transitions and animations
+                  </p>
+                </div>
+                <Switch
+                  checked={preferences.showAnimations}
+                  onCheckedChange={setShowAnimations}
+                  data-testid="switch-animations"
+                />
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {isOwner && (
+          <TabsContent value="admin" className="space-y-6">
+            <Card data-testid="card-admin-password">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-lg">
             <Key className="h-5 w-5" />
@@ -149,22 +258,25 @@ export default function SettingsPage() {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">About Admin Access</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3 text-sm text-muted-foreground">
-          <p>
-            Members who enter the correct password can create announcements in the Admin Posts section.
-          </p>
-          <p>
-            All members can view and comment on announcements, but only those with the password can create them.
-          </p>
-          <p>
-            As an owner (TheBrotherhoodOfAlaska@outlook.com or 2thumbsupgames@gmail.com), you always have admin access and can change this password at any time.
-          </p>
-        </CardContent>
-      </Card>
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">About Admin Access</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3 text-sm text-muted-foreground">
+                <p>
+                  Members who enter the correct password can create announcements in the Admin Posts section.
+                </p>
+                <p>
+                  All members can view and comment on announcements, but only those with the password can create them.
+                </p>
+                <p>
+                  As an owner (TheBrotherhoodOfAlaska@outlook.com or 2thumbsupgames@gmail.com), you always have admin access and can change this password at any time.
+                </p>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        )}
+      </Tabs>
     </div>
   );
 }

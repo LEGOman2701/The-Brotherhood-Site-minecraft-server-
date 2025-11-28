@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/theme-provider";
 import { AuthProvider, useAuth } from "@/lib/auth-context";
 import { SearchProvider } from "@/lib/search-context";
+import { PreferencesProvider } from "@/lib/preferences-context";
 import { Header } from "@/components/header";
 import LoginPage from "@/pages/login";
 import FeedPage from "@/pages/feed";
@@ -100,8 +101,10 @@ function App() {
         <TooltipProvider>
           <AuthProvider>
             <SearchProvider>
-              <Router />
-              <Toaster />
+              <PreferencesProvider>
+                <Router />
+                <Toaster />
+              </PreferencesProvider>
             </SearchProvider>
           </AuthProvider>
         </TooltipProvider>
