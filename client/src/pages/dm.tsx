@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
 import { Send, Trash2 } from "lucide-react";
 import { useState } from "react";
+import { parseDiscordMarkdown } from "@/lib/discord-markdown";
 import type { DirectMessageWithAuthor, User as UserType } from "@shared/schema";
 
 export default function DMPage() {
@@ -162,11 +163,11 @@ export default function DMPage() {
                 >
                   <div className="flex items-center gap-2">
                     <div
-                      className={`px-4 py-2 rounded-lg break-words ${
+                      className={`px-4 py-2 rounded-lg break-words text-sm ${
                         isOwnMessage ? "bg-primary text-primary-foreground" : "bg-muted"
                       }`}
                     >
-                      <p className="text-sm">{msg.content}</p>
+                      {parseDiscordMarkdown(msg.content)}
                     </div>
                     {isOwnMessage && (
                       <Button

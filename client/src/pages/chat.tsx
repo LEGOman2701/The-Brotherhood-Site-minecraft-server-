@@ -12,6 +12,7 @@ import { Link, useLocation } from "wouter";
 import { useAuth } from "@/lib/auth-context";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { parseDiscordMarkdown } from "@/lib/discord-markdown";
 import type { ChatMessageWithAuthor } from "@shared/schema";
 
 export default function ChatPage() {
@@ -201,7 +202,7 @@ export default function ChatPage() {
                     </div>
                     <div className="flex items-center gap-2">
                       <div 
-                        className={`px-4 py-2 rounded-lg max-w-xs sm:max-w-md break-words ${
+                        className={`px-4 py-2 rounded-lg max-w-xs sm:max-w-md break-words text-sm ${
                           msg.author.role === "Supreme Leader" 
                             ? "bg-yellow-50 text-yellow-900" 
                             : msg.author.role === "The Council of Snow"
@@ -215,7 +216,7 @@ export default function ChatPage() {
                             : "bg-muted"
                         }`}
                       >
-                        <p className="text-sm">{msg.content}</p>
+                        {parseDiscordMarkdown(msg.content)}
                       </div>
                       {isAdmin && (
                         <Button

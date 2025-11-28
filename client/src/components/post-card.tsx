@@ -11,6 +11,7 @@ import { Link } from "wouter";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { parseDiscordMarkdown } from "@/lib/discord-markdown";
 import type { PostWithAuthor } from "@shared/schema";
 
 interface PostCardProps {
@@ -181,9 +182,9 @@ export function PostCard({ post }: PostCardProps) {
       </CardHeader>
 
       <CardContent className="pb-3">
-        <p className="text-sm whitespace-pre-wrap" data-testid={`text-content-${post.id}`}>
-          {post.content}
-        </p>
+        <div className="text-sm whitespace-pre-wrap" data-testid={`text-content-${post.id}`}>
+          {parseDiscordMarkdown(post.content)}
+        </div>
       </CardContent>
 
       <CardFooter className="flex flex-col gap-4 pt-0">
@@ -255,7 +256,7 @@ export function PostCard({ post }: PostCardProps) {
                         {formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true })}
                       </span>
                     </div>
-                    <p className="text-sm pl-8">{comment.content}</p>
+                    <div className="text-sm pl-8">{parseDiscordMarkdown(comment.content)}</div>
                   </div>
                 ))}
               </div>
