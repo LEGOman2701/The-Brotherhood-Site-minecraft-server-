@@ -29,6 +29,7 @@ export const posts = pgTable("posts", {
   content: text("content").notNull(),
   authorId: varchar("author_id", { length: 255 }).notNull().references(() => users.id),
   isAdminPost: boolean("is_admin_post").default(false).notNull(),
+  fileAttachmentIds: text("file_attachment_ids"), // JSON array of file IDs
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 

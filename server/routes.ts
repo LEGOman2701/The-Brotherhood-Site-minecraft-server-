@@ -215,7 +215,7 @@ export async function registerRoutes(
   app.post("/api/posts", authMiddleware, async (req, res) => {
     try {
       const userId = req.userId!;
-      const { content, isAdminPost } = req.body;
+      const { content, isAdminPost, fileAttachmentIds } = req.body;
       
       if (!content || content.trim().length === 0) {
         return res.status(400).json({ error: "Content is required" });
@@ -411,7 +411,7 @@ export async function registerRoutes(
   app.post("/api/chat", authMiddleware, async (req, res) => {
     try {
       const userId = req.userId!;
-      const { content } = req.body;
+      const { content, fileAttachmentIds } = req.body;
       
       if (!content || content.trim().length === 0) {
         return res.status(400).json({ error: "Content is required" });
@@ -420,6 +420,7 @@ export async function registerRoutes(
       const message = await storage.createChatMessage({
         content: content.trim(),
         authorId: userId,
+        fileAttachmentIds: fileAttachmentIds || undefined,
       });
 
       // Broadcast to all WebSocket clients
