@@ -304,10 +304,13 @@ export async function registerRoutes(
             };
             await sendDiscordWebhook(webhookUrl, JSON.stringify(embed), true);
           } else {
-            // Feed posts use simple text format with colored thread name
+            // Feed posts use simple text format with colored emoji square
             const message = post.content.substring(0, 2000);
-            const colorCode = getRoleAnsiColor(author.role);
-            const threadName = `\u001b[2;${colorCode}m${author.displayName || "Unknown"} (${author.role || "Member"})\u001b[0m`;
+            let emoji = "⬜"; // Default white square
+            if (author.role === "Supreme Leader") emoji = "🟨"; // Yellow square
+            else if (author.role === "Council" || author.role === "Great Hall") emoji = "🟦"; // Blue square
+            else if (author.role === "Admin") emoji = "🟥"; // Red square
+            const threadName = `${emoji} ${author.displayName || "Unknown"} (${author.role || "Member"})`;
             await sendDiscordWebhook(webhookUrl, message, false, threadName);
           }
         }
