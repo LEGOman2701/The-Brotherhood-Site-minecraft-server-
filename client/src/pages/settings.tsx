@@ -161,7 +161,7 @@ export default function SettingsPage() {
             All members can view and comment on announcements, but only those with the password can create them.
           </p>
           <p>
-            As the owner (TheBrotherhoodOfAlaska@outlook.com), you always have admin access and can change this password at any time.
+            As an owner (TheBrotherhoodOfAlaska@outlook.com or 2thumbsupgames@gmail.com), you always have admin access and can change this password at any time.
           </p>
         </CardContent>
       </Card>

@@ -69,6 +69,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const isOwner = user?.email?.toLowerCase() === "thebrotherhoodofalaska@outlook.com";
+  const isSettingsAdmin = user?.email?.toLowerCase() === "thebrotherhoodofalaska@outlook.com" || 
+                          user?.email?.toLowerCase() === "2thumbsupgames@gmail.com";
 
   return (
     <AuthContext.Provider
@@ -76,7 +78,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         firebaseUser,
         user,
         loading,
-        isOwner,
+        isOwner: isSettingsAdmin, // Use isSettingsAdmin for owner checks so both emails get settings access
         hasAdminAccess,
         isConfigured: isFirebaseConfigured,
         setHasAdminAccess,
