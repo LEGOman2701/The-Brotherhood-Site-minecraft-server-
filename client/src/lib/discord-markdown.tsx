@@ -16,17 +16,33 @@ export function parseDiscordMarkdown(text: string): React.ReactNode {
   while (i < lines.length) {
     const line = lines[i];
 
-    // Handle headings: # ## ### and -# -## -###
-    const headingMatch = line.match(/^(-?)#{1,3}\s+(.+)$/);
+    // Handle subtext: -# (small text)
+    if (line.match(/^-#\s+(.+)$/)) {
+      const subtextMatch = line.match(/^-#\s+(.+)$/);
+      if (subtextMatch) {
+        elements.push(
+          <div
+            key={`subtext-${elements.length}`}
+            className="text-xs text-muted-foreground my-1"
+          >
+            {parseInlineMarkdown(subtextMatch[1])}
+          </div>
+        );
+        i++;
+        continue;
+      }
+    }
+
+    // Handle headings: # ## ###
+    const headingMatch = line.match(/^#{1,3}\s+(.+)$/);
     if (headingMatch) {
-      const isUnderlined = headingMatch[1] === "-";
       const headingLevel = (headingMatch[0].match(/#/g) || []).length;
-      const content = headingMatch[2];
+      const content = headingMatch[1];
 
       const headingClasses = {
-        1: isUnderlined ? "text-2xl font-bold underline" : "text-2xl font-bold",
-        2: isUnderlined ? "text-xl font-bold underline" : "text-xl font-bold",
-        3: isUnderlined ? "text-lg font-bold underline" : "text-lg font-bold",
+        1: "text-2xl font-bold",
+        2: "text-xl font-bold",
+        3: "text-lg font-bold",
       };
 
       const HeadingTag = headingLevel === 1 ? "h1" : headingLevel === 2 ? "h2" : "h3";
