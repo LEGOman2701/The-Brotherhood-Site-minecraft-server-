@@ -80,13 +80,33 @@ export const likesRelations = relations(likes, ({ one }) => ({
   }),
 }));
 
+// File attachments table
+export const fileAttachments = pgTable("file_attachments", {
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  filename: text("filename").notNull(),
+  mimeType: text("mime_type").notNull(),
+  size: integer("size").notNull(),
+  data: text("data").notNull(), // Base64 encoded file data
+  uploadedBy: varchar("uploaded_by", { length: 255 }).notNull().references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  expiresAt: timestamp("expires_at").notNull(), // Auto-delete after 24 hours
+});
+
 // Chat messages table
 export const chatMessages = pgTable("chat_messages", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
   content: text("content").notNull(),
   authorId: varchar("author_id", { length: 255 }).notNull().references(() => users.id),
+  fileAttachmentIds: text("file_attachment_ids"), // JSON array of file IDs
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
+
+export const fileAttachmentsRelations = relations(fileAttachments, ({ one }) => ({
+  uploader: one(users, {
+    fields: [fileAttachments.uploadedBy],
+    references: [users.id],
+  }),
+}));
 
 export const chatMessagesRelations = relations(chatMessages, ({ one }) => ({
   author: one(users, {
@@ -126,7 +146,8 @@ export const insertUserSchema = createInsertSchema(users).omit({ createdAt: true
 export const insertPostSchema = createInsertSchema(posts).omit({ id: true as const, createdAt: true as const });
 export const insertCommentSchema = createInsertSchema(comments).omit({ id: true as const, createdAt: true as const });
 export const insertLikeSchema = createInsertSchema(likes);
-export const insertChatMessageSchema = createInsertSchema(chatMessages).omit({ id: true as const, createdAt: true as const });
+export const insertFileAttachmentSchema = createInsertSchema(fileAttachments).omit({ id: true as const, createdAt: true as const });
+export const insertChatMessageSchema = createInsertSchema(chatMessages).omit({ id: true as const, createdAt: true as const }).extend({ fileAttachmentIds: z.string().optional() });
 export const insertDirectMessageSchema = createInsertSchema(directMessages).omit({ id: true as const, createdAt: true as const });
 export const insertAppSettingSchema = createInsertSchema(appSettings);
 
@@ -139,6 +160,8 @@ export type Comment = typeof comments.$inferSelect;
 export type InsertComment = z.infer<typeof insertCommentSchema>;
 export type Like = typeof likes.$inferSelect;
 export type InsertLike = z.infer<typeof insertLikeSchema>;
+export type FileAttachment = typeof fileAttachments.$inferSelect;
+export type InsertFileAttachment = z.infer<typeof insertFileAttachmentSchema>;
 export type ChatMessage = typeof chatMessages.$inferSelect;
 export type InsertChatMessage = z.infer<typeof insertChatMessageSchema>;
 export type DirectMessage = typeof directMessages.$inferSelect;
