@@ -233,6 +233,7 @@ export async function registerRoutes(
         content: content.trim(),
         authorId: userId,
         isAdminPost: isAdminPost || false,
+        fileAttachmentIds: fileAttachmentIds || undefined,
       });
 
       res.json(post);
