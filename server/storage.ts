@@ -60,14 +60,11 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    const isOwner = insertUser.email.toLowerCase() === "thebrotherhoodofalaska@outlook.com";
     const [user] = await db
       .insert(users)
       .values({
         ...insertUser,
         email: insertUser.email.toLowerCase(),
-        isOwner,
-        hasAdminAccess: isOwner,
       })
       .returning();
     return user;
