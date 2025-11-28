@@ -236,7 +236,7 @@ export function PostCard({ post }: PostCardProps) {
         </div>
 
         {showComments && (
-          <div className={`w-full space-y-3 border-t pt-4 ${preferences.showAnimations ? "animate-expand-bounce" : ""}`}>
+          <div className={`w-full space-y-3 border-t pt-4 ${preferences.showAnimations ? "animate-smooth-slide-down" : ""}`}>
             {user && (
               <div className="flex gap-2">
                 <Textarea
