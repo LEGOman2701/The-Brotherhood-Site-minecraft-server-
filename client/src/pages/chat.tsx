@@ -97,11 +97,25 @@ export default function ChatPage() {
     mutationFn: async (messageId: number) => {
       return apiRequest("DELETE", `/api/chat/${messageId}`, {});
     },
+    onMutate: async (messageId: number) => {
+      await queryClient.cancelQueries({ queryKey: ["/api/chat"] });
+      const previousMessages = queryClient.getQueryData<ChatMessageWithAuthor[]>([
+        "/api/chat",
+      ]);
+      queryClient.setQueryData(
+        ["/api/chat"],
+        (old: ChatMessageWithAuthor[] | undefined) =>
+          old?.filter((msg) => msg.id !== messageId) || []
+      );
+      return { previousMessages };
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/chat"] });
       toast({ title: "Message deleted" });
     },
-    onError: () => {
+    onError: (err, messageId, context) => {
+      if (context?.previousMessages) {
+        queryClient.setQueryData(["/api/chat"], context.previousMessages);
+      }
       toast({ title: "Failed to delete message", variant: "destructive" });
     },
   });

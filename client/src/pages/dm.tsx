@@ -9,7 +9,7 @@ import { useRoute } from "wouter";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
-import { Send } from "lucide-react";
+import { Send, Trash2 } from "lucide-react";
 import { useState } from "react";
 import type { DirectMessageWithAuthor, User as UserType } from "@shared/schema";
 
@@ -42,6 +42,33 @@ export default function DMPage() {
     },
     onError: () => {
       toast({ title: "Failed to send message", variant: "destructive" });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (messageId: number) => {
+      return apiRequest("DELETE", `/api/dm/${messageId}`, {});
+    },
+    onMutate: async (messageId: number) => {
+      await queryClient.cancelQueries({ queryKey: [`/api/dm/${otherUserId}`] });
+      const previousMessages = queryClient.getQueryData<DirectMessageWithAuthor[]>([
+        `/api/dm/${otherUserId}`,
+      ]);
+      queryClient.setQueryData(
+        [`/api/dm/${otherUserId}`],
+        (old: DirectMessageWithAuthor[] | undefined) =>
+          old?.filter((msg) => msg.id !== messageId) || []
+      );
+      return { previousMessages };
+    },
+    onSuccess: () => {
+      toast({ title: "Message deleted" });
+    },
+    onError: (err, messageId, context) => {
+      if (context?.previousMessages) {
+        queryClient.setQueryData([`/api/dm/${otherUserId}`], context.previousMessages);
+      }
+      toast({ title: "Failed to delete message", variant: "destructive" });
     },
   });
 
@@ -119,7 +146,7 @@ export default function DMPage() {
             return (
               <div
                 key={msg.id}
-                className={`flex gap-2 ${isOwnMessage ? "justify-end" : "justify-start"}`}
+                className={`flex gap-2 group ${isOwnMessage ? "justify-end" : "justify-start"}`}
                 data-testid={`message-${msg.id}`}
               >
                 {!isOwnMessage && (
@@ -133,12 +160,26 @@ export default function DMPage() {
                 <div
                   className={`flex flex-col gap-1 max-w-xs ${isOwnMessage ? "items-end" : "items-start"}`}
                 >
-                  <div
-                    className={`px-4 py-2 rounded-lg break-words ${
-                      isOwnMessage ? "bg-primary text-primary-foreground" : "bg-muted"
-                    }`}
-                  >
-                    <p className="text-sm">{msg.content}</p>
+                  <div className="flex items-center gap-2">
+                    <div
+                      className={`px-4 py-2 rounded-lg break-words ${
+                        isOwnMessage ? "bg-primary text-primary-foreground" : "bg-muted"
+                      }`}
+                    >
+                      <p className="text-sm">{msg.content}</p>
+                    </div>
+                    {isOwnMessage && (
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={() => deleteMutation.mutate(msg.id)}
+                        disabled={deleteMutation.isPending}
+                        data-testid={`button-delete-dm-${msg.id}`}
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    )}
                   </div>
                   <span className="text-xs text-muted-foreground">
                     {formatDistanceToNow(new Date(msg.createdAt), { addSuffix: true })}

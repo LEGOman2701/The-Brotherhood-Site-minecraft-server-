@@ -27,11 +27,30 @@ export function PostCard({ post }: PostCardProps) {
     mutationFn: async () => {
       return apiRequest("POST", `/api/posts/${post.id}/like`);
     },
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey: ["/api/posts"] });
+      const previousPosts = queryClient.getQueryData<PostWithAuthor[]>(["/api/posts"]);
+      queryClient.setQueryData(["/api/posts"], (old: PostWithAuthor[] | undefined) =>
+        old?.map((p) =>
+          p.id === post.id
+            ? {
+                ...p,
+                isLiked: !p.isLiked,
+                likesCount: p.isLiked ? p.likesCount - 1 : p.likesCount + 1,
+              }
+            : p
+        ) || []
+      );
+      return { previousPosts };
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/posts"] });
       queryClient.invalidateQueries({ queryKey: ["/api/admin-posts"] });
     },
-    onError: () => {
+    onError: (err, variables, context) => {
+      if (context?.previousPosts) {
+        queryClient.setQueryData(["/api/posts"], context.previousPosts);
+      }
       toast({ title: "Failed to update like", variant: "destructive" });
     },
   });
@@ -40,13 +59,31 @@ export function PostCard({ post }: PostCardProps) {
     mutationFn: async (content: string) => {
       return apiRequest("POST", `/api/posts/${post.id}/comments`, { content });
     },
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey: ["/api/posts"] });
+      const previousPosts = queryClient.getQueryData<PostWithAuthor[]>(["/api/posts"]);
+      queryClient.setQueryData(["/api/posts"], (old: PostWithAuthor[] | undefined) =>
+        old?.map((p) =>
+          p.id === post.id
+            ? {
+                ...p,
+                commentsCount: p.commentsCount + 1,
+              }
+            : p
+        ) || []
+      );
+      return { previousPosts };
+    },
     onSuccess: () => {
       setCommentText("");
       queryClient.invalidateQueries({ queryKey: ["/api/posts"] });
       queryClient.invalidateQueries({ queryKey: ["/api/admin-posts"] });
       toast({ title: "Comment added!" });
     },
-    onError: () => {
+    onError: (err, variables, context) => {
+      if (context?.previousPosts) {
+        queryClient.setQueryData(["/api/posts"], context.previousPosts);
+      }
       toast({ title: "Failed to add comment", variant: "destructive" });
     },
   });
