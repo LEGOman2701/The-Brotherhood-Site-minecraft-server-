@@ -617,13 +617,13 @@ export async function registerRoutes(
     }
   });
 
-  // Get Discord webhook URLs (owner only)
+  // Get Discord webhook URLs (owner or Supreme Leader only)
   app.get("/api/admin/webhooks", authMiddleware, async (req, res) => {
     try {
       const userId = req.userId!;
       const user = await storage.getUser(userId);
       
-      if (!user?.isOwner) {
+      if (!user?.isOwner && user?.role !== "Supreme Leader") {
         return res.status(403).json({ error: "Owner access required" });
       }
 
@@ -642,13 +642,13 @@ export async function registerRoutes(
     }
   });
 
-  // Set Discord webhook URLs (owner only)
+  // Set Discord webhook URLs (owner or Supreme Leader only)
   app.post("/api/admin/webhooks", authMiddleware, async (req, res) => {
     try {
       const userId = req.userId!;
       const user = await storage.getUser(userId);
       
-      if (!user?.isOwner) {
+      if (!user?.isOwner && user?.role !== "Supreme Leader") {
         return res.status(403).json({ error: "Owner access required" });
       }
 
