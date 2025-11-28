@@ -8,7 +8,7 @@ import { User, Mail, Calendar, FileText } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { useAuth } from "@/lib/auth-context";
 import { useRoute } from "wouter";
-import type { PostWithAuthor } from "@shared/schema";
+import type { PostWithAuthor, User as UserType } from "@shared/schema";
 
 export default function ProfilePage() {
   const { user } = useAuth();
@@ -21,7 +21,7 @@ export default function ProfilePage() {
     enabled: !!user && (isOwnProfile || !!userId),
   });
 
-  const { data: profileUser, isLoading: profileLoading } = useQuery({
+  const { data: profileUser, isLoading: profileLoading } = useQuery<UserType>({
     queryKey: ["/api/users/:userId", userId],
     enabled: !!userId && userId !== user?.id,
   });

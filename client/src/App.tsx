@@ -66,6 +66,7 @@ function Router() {
       <Route path="/admin" component={ProtectedAdmin} />
       <Route path="/chat" component={ProtectedChat} />
       <Route path="/settings" component={ProtectedSettings} />
+      <Route path="/profile/:userId" component={ProtectedProfile} />
       <Route path="/profile" component={ProtectedProfile} />
       <Route path="/" component={ProtectedFeed} />
       <Route component={NotFound} />

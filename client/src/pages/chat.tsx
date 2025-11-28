@@ -8,6 +8,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Send, MessageCircle, Users, Trash2 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import { Link } from "wouter";
 import { useAuth } from "@/lib/auth-context";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -30,8 +31,13 @@ export default function ChatPage() {
   useEffect(() => {
     try {
       const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-      const host = window.location.hostname + (window.location.port ? ':' + window.location.port : '');
-      const wsUrl = `${protocol}//${host}/ws`;
+      // Use relative protocol to handle both local dev and production
+      const wsUrl = `${protocol}//${window.location.host}/ws`;
+      // Fallback if location.host is undefined (shouldn't happen but safety check)
+      if (!window.location.host || window.location.host.includes('undefined')) {
+        console.warn('Invalid location.host, skipping WebSocket');
+        return;
+      }
       const ws = new WebSocket(wsUrl);
 
       ws.onopen = () => {

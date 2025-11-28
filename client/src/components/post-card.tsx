@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Heart, MessageCircle, ChevronDown, ChevronUp, Send, Trash2 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { useAuth } from "@/lib/auth-context";
+import { Link } from "wouter";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -95,12 +96,14 @@ export function PostCard({ post }: PostCardProps) {
     <Card className="overflow-visible" data-testid={`card-post-${post.id}`}>
       <CardHeader className="flex flex-row items-start justify-between gap-4 space-y-0 pb-3">
         <div className="flex items-center gap-3">
-          <Avatar className="h-10 w-10">
-            <AvatarImage src={post.author.photoURL || undefined} alt={post.author.displayName} />
-            <AvatarFallback className="bg-secondary text-secondary-foreground text-sm">
-              {getInitials(post.author.displayName)}
-            </AvatarFallback>
-          </Avatar>
+          <Link href={`/profile/${post.author.id}`}>
+            <Avatar className="h-10 w-10 cursor-pointer hover-elevate">
+              <AvatarImage src={post.author.photoURL || undefined} alt={post.author.displayName} />
+              <AvatarFallback className="bg-secondary text-secondary-foreground text-sm">
+                {getInitials(post.author.displayName)}
+              </AvatarFallback>
+            </Avatar>
+          </Link>
           <div>
             <div className="flex items-center gap-2">
               <span className="font-semibold text-sm" data-testid={`text-author-${post.id}`}>
@@ -197,12 +200,14 @@ export function PostCard({ post }: PostCardProps) {
                 {post.comments.map((comment) => (
                   <div key={comment.id} className="space-y-1" data-testid={`comment-${comment.id}`}>
                     <div className="flex items-center gap-2">
-                      <Avatar className="h-6 w-6">
-                        <AvatarImage src={comment.author.photoURL || undefined} />
-                        <AvatarFallback className="text-xs bg-muted">
-                          {getInitials(comment.author.displayName)}
-                        </AvatarFallback>
-                      </Avatar>
+                      <Link href={`/profile/${comment.author.id}`}>
+                        <Avatar className="h-6 w-6 cursor-pointer hover-elevate">
+                          <AvatarImage src={comment.author.photoURL || undefined} />
+                          <AvatarFallback className="text-xs bg-muted">
+                            {getInitials(comment.author.displayName)}
+                          </AvatarFallback>
+                        </Avatar>
+                      </Link>
                       <span className="font-medium text-sm">{comment.author.displayName}</span>
                       <span className="text-xs text-muted-foreground">
                         {formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true })}

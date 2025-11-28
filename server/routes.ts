@@ -320,6 +320,35 @@ export async function registerRoutes(
     }
   });
 
+  // Get specific user profile and posts
+  app.get("/api/users/:userId", authMiddleware, async (req, res) => {
+    try {
+      const { userId } = req.params;
+      const user = await storage.getUser(userId);
+      
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      
+      res.json(user);
+    } catch (error) {
+      console.error("Get user error:", error);
+      res.status(500).json({ error: "Failed to get user" });
+    }
+  });
+
+  // Get specific user's posts
+  app.get("/api/users/:userId/posts", authMiddleware, async (req, res) => {
+    try {
+      const { userId } = req.params;
+      const posts = await storage.getUserPosts(userId);
+      res.json(posts);
+    } catch (error) {
+      console.error("Get user posts error:", error);
+      res.status(500).json({ error: "Failed to get user posts" });
+    }
+  });
+
   // Get chat messages
   app.get("/api/chat", authMiddleware, async (req, res) => {
     try {
