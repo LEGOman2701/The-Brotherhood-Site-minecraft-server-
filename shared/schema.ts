@@ -27,6 +27,7 @@ export const usersRelations = relations(users, ({ many }) => ({
 export const posts = pgTable("posts", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
   content: text("content").notNull(),
+  title: text("title"), // Optional title for admin announcements
   authorId: varchar("author_id", { length: 255 }).notNull().references(() => users.id),
   isAdminPost: boolean("is_admin_post").default(false).notNull(),
   fileAttachmentIds: text("file_attachment_ids"), // JSON array of file IDs

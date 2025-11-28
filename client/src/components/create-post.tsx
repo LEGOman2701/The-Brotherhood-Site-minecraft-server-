@@ -1,6 +1,7 @@
 import { useState, useRef } from "react";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -13,6 +14,7 @@ interface CreatePostProps {
 
 export function CreatePost({ isAdminPost = false }: CreatePostProps) {
   const [content, setContent] = useState("");
+  const [title, setTitle] = useState("");
   const [fileAttachments, setFileAttachments] = useState<{ id: number; filename: string; mimeType: string; size: number }[]>([]);
   const { toast } = useToast();
   const maxLength = 2000;
@@ -57,12 +59,14 @@ export function CreatePost({ isAdminPost = false }: CreatePostProps) {
     mutationFn: async (postContent: string) => {
       return apiRequest("POST", "/api/posts", { 
         content: postContent,
+        title: isAdminPost ? title : undefined,
         isAdminPost,
         fileAttachmentIds: fileAttachments.map(f => f.id.toString()).join(","),
       });
     },
     onSuccess: () => {
       setContent("");
+      setTitle("");
       setFileAttachments([]);
       queryClient.invalidateQueries({ queryKey: ["/api/posts"] });
       queryClient.invalidateQueries({ queryKey: ["/api/admin-posts"] });
@@ -107,7 +111,16 @@ export function CreatePost({ isAdminPost = false }: CreatePostProps) {
           {isAdminPost ? "Create Announcement" : "Create Post"}
         </CardTitle>
       </CardHeader>
-      <CardContent className="pb-3">
+      <CardContent className="pb-3 space-y-3">
+        {isAdminPost && (
+          <Input
+            placeholder="Announcement header (optional)"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            maxLength={100}
+            data-testid="input-announcement-title"
+          />
+        )}
         <Textarea
           placeholder={isAdminPost 
             ? "Write an announcement for the community..." 

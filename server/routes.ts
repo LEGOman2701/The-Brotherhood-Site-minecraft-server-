@@ -229,7 +229,7 @@ export async function registerRoutes(
   app.post("/api/posts", authMiddleware, async (req, res) => {
     try {
       const userId = req.userId!;
-      const { content, isAdminPost, fileAttachmentIds } = req.body;
+      const { content, isAdminPost, fileAttachmentIds, title } = req.body;
       
       if (!content || content.trim().length === 0) {
         return res.status(400).json({ error: "Content is required" });
@@ -245,6 +245,7 @@ export async function registerRoutes(
 
       const post = await storage.createPost({
         content: content.trim(),
+        title: isAdminPost && title ? title.trim() : undefined,
         authorId: userId,
         isAdminPost: isAdminPost || false,
         fileAttachmentIds: fileAttachmentIds || undefined,
@@ -258,7 +259,7 @@ export async function registerRoutes(
         
         if (webhookUrl && author) {
           const embed = {
-            title: isAdminPost ? "New Announcement" : "New Post",
+            title: post.title || (isAdminPost ? "New Announcement" : "New Post"),
             description: post.content.substring(0, 2000),
             author: isAdminPost ? undefined : {
               name: author.displayName || "Unknown",
