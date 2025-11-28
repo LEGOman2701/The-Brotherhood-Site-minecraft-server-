@@ -16,6 +16,33 @@ export function parseDiscordMarkdown(text: string): React.ReactNode {
   while (i < lines.length) {
     const line = lines[i];
 
+    // Handle headings: # ## ### and -# -## -###
+    const headingMatch = line.match(/^(-?)#{1,3}\s+(.+)$/);
+    if (headingMatch) {
+      const isUnderlined = headingMatch[1] === "-";
+      const headingLevel = (headingMatch[0].match(/#/g) || []).length;
+      const content = headingMatch[2];
+
+      const headingClasses = {
+        1: isUnderlined ? "text-2xl font-bold underline" : "text-2xl font-bold",
+        2: isUnderlined ? "text-xl font-bold underline" : "text-xl font-bold",
+        3: isUnderlined ? "text-lg font-bold underline" : "text-lg font-bold",
+      };
+
+      const HeadingTag = headingLevel === 1 ? "h1" : headingLevel === 2 ? "h2" : "h3";
+
+      elements.push(
+        <HeadingTag
+          key={`heading-${elements.length}`}
+          className={`${headingClasses[headingLevel as 1 | 2 | 3]} my-2`}
+        >
+          {parseInlineMarkdown(content)}
+        </HeadingTag>
+      );
+      i++;
+      continue;
+    }
+
     // Handle >>> (multi-line quote)
     if (line.startsWith(">>>")) {
       const quoteContent: string[] = [];
