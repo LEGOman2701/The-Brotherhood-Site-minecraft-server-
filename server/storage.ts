@@ -1,7 +1,7 @@
 // Database storage implementation for The Brotherhood
 // Reference: javascript_database blueprint
 import { 
-  users, posts, comments, likes, chatMessages, directMessages, appSettings,
+  users, posts, comments, likes, chatMessages, directMessages, appSettings, fileAttachments,
   type User, type InsertUser,
   type Post, type InsertPost,
   type Comment, type InsertComment,
@@ -9,6 +9,7 @@ import {
   type ChatMessage, type InsertChatMessage,
   type DirectMessage, type InsertDirectMessage,
   type AppSetting, type InsertAppSetting,
+  type FileAttachment, type InsertFileAttachment,
   type PostWithAuthor, type ChatMessageWithAuthor, type DirectMessageWithAuthor
 } from "@shared/schema";
 import { db } from "./db";
@@ -52,6 +53,12 @@ export interface IStorage {
   // Settings
   getSetting(key: string): Promise<string | undefined>;
   setSetting(key: string, value: string): Promise<void>;
+  
+  // File Attachments
+  uploadFile(file: InsertFileAttachment): Promise<FileAttachment>;
+  getFile(id: number): Promise<FileAttachment | undefined>;
+  deleteFile(id: number): Promise<void>;
+  deleteExpiredFiles(): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -337,6 +344,26 @@ export class DatabaseStorage implements IStorage {
       .insert(appSettings)
       .values({ key, value })
       .onConflictDoUpdate({ target: appSettings.key, set: { value } });
+  }
+
+  // File Attachments
+  async uploadFile(fileData: Omit<InsertFileAttachment, 'expiresAt'>): Promise<FileAttachment> {
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    const [newFile] = await db.insert(fileAttachments).values({ ...fileData, expiresAt }).returning();
+    return newFile;
+  }
+
+  async getFile(id: number): Promise<FileAttachment | undefined> {
+    const [file] = await db.select().from(fileAttachments).where(eq(fileAttachments.id, id));
+    return file || undefined;
+  }
+
+  async deleteFile(id: number): Promise<void> {
+    await db.delete(fileAttachments).where(eq(fileAttachments.id, id));
+  }
+
+  async deleteExpiredFiles(): Promise<void> {
+    await db.delete(fileAttachments).where(sql`${fileAttachments.expiresAt} <= NOW()`);
   }
 }
 

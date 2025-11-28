@@ -562,5 +562,89 @@ export async function registerRoutes(
     }
   });
 
+  // Upload file
+  app.post("/api/files", authMiddleware, async (req, res) => {
+    try {
+      const userId = req.userId!;
+      const { filename, mimeType, size, data } = req.body;
+      
+      const MAX_FILE_SIZE = 25 * 1024 * 1024;
+      if (size > MAX_FILE_SIZE) {
+        return res.status(400).json({ error: "File size exceeds 25MB limit" });
+      }
+      
+      if (!filename || !mimeType || !data) {
+        return res.status(400).json({ error: "Missing required fields" });
+      }
+
+      const file = await storage.uploadFile({
+        filename,
+        mimeType,
+        size,
+        data,
+        uploadedBy: userId,
+      });
+
+      res.json(file);
+    } catch (error) {
+      console.error("Upload file error:", error);
+      res.status(500).json({ error: "Failed to upload file" });
+    }
+  });
+
+  // Download file
+  app.get("/api/files/:id", authMiddleware, async (req, res) => {
+    try {
+      const fileId = parseInt(req.params.id);
+      const file = await storage.getFile(fileId);
+      
+      if (!file) {
+        return res.status(404).json({ error: "File not found" });
+      }
+
+      res.setHeader("Content-Type", file.mimeType);
+      res.setHeader("Content-Disposition", `inline; filename="${file.filename}"`);
+      res.setHeader("Content-Length", file.size);
+      res.send(Buffer.from(file.data, "base64"));
+    } catch (error) {
+      console.error("Download file error:", error);
+      res.status(500).json({ error: "Failed to download file" });
+    }
+  });
+
+  // Delete file
+  app.delete("/api/files/:id", authMiddleware, async (req, res) => {
+    try {
+      const userId = req.userId!;
+      const fileId = parseInt(req.params.id);
+      const file = await storage.getFile(fileId);
+      
+      if (!file) {
+        return res.status(404).json({ error: "File not found" });
+      }
+
+      const user = await storage.getUser(userId);
+      if (file.uploadedBy !== userId && !user?.hasAdminAccess) {
+        return res.status(403).json({ error: "Not authorized" });
+      }
+
+      await storage.deleteFile(fileId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Delete file error:", error);
+      res.status(500).json({ error: "Failed to delete file" });
+    }
+  });
+
+  // Schedule file cleanup (every hour)
+  setInterval(async () => {
+    try {
+      await storage.deleteExpiredFiles();
+      console.log("Expired files cleaned up");
+    } catch (error) {
+      console.error("File cleanup error:", error);
+    }
+  }, 60 * 60 * 1000);
+
   return httpServer;
 }

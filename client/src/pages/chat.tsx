@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Send, MessageCircle, Users, Trash2 } from "lucide-react";
+import { Send, MessageCircle, Users, Trash2, Paperclip, Play } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/lib/auth-context";
@@ -21,8 +21,10 @@ export default function ChatPage() {
   const [, setLocation] = useLocation();
   const [message, setMessage] = useState("");
   const [socket, setSocket] = useState<WebSocket | null>(null);
+  const [fileAttachments, setFileAttachments] = useState<{ id: number; filename: string; mimeType: string; size: number }[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: messages, isLoading } = useQuery<ChatMessageWithAuthor[]>({
     queryKey: ["/api/chat"],
@@ -82,15 +84,49 @@ export default function ChatPage() {
 
   const sendMutation = useMutation({
     mutationFn: async (content: string) => {
-      return apiRequest("POST", "/api/chat", { content });
+      return apiRequest("POST", "/api/chat", { content, fileAttachmentIds: fileAttachments.map(f => f.id.toString()).join(",") });
     },
     onSuccess: () => {
       setMessage("");
+      setFileAttachments([]);
       inputRef.current?.focus();
-      // The WebSocket will trigger a refetch
     },
     onError: () => {
       toast({ title: "Failed to send message", variant: "destructive" });
+    },
+  });
+
+  const uploadFileMutation = useMutation({
+    mutationFn: async (file: File) => {
+      const reader = new FileReader();
+      return new Promise<void>((resolve, reject) => {
+        reader.onload = async () => {
+          const base64 = reader.result?.toString().split(",")[1];
+          if (!base64) {
+            reject(new Error("Failed to read file"));
+            return;
+          }
+          
+          try {
+            const uploaded = await apiRequest("POST", "/api/files", {
+              filename: file.name,
+              mimeType: file.type,
+              size: file.size,
+              data: base64,
+            });
+            setFileAttachments(prev => [...prev, uploaded]);
+            toast({ title: "File uploaded successfully" });
+            resolve();
+          } catch (err) {
+            reject(err);
+          }
+        };
+        reader.onerror = () => reject(reader.error);
+        reader.readAsDataURL(file);
+      });
+    },
+    onError: () => {
+      toast({ title: "Failed to upload file", variant: "destructive" });
     },
   });
 
@@ -131,6 +167,23 @@ export default function ChatPage() {
       e.preventDefault();
       handleSend();
     }
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    if (file.size > 25 * 1024 * 1024) {
+      toast({ title: "File is too large (max 25MB)", variant: "destructive" });
+      return;
+    }
+    
+    uploadFileMutation.mutate(file);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const removeAttachment = (id: number) => {
+    setFileAttachments(prev => prev.filter(f => f.id !== id));
   };
 
   const getInitials = (name: string) => {
@@ -200,7 +253,7 @@ export default function ChatPage() {
                         {formatDistanceToNow(new Date(msg.createdAt), { addSuffix: true })}
                       </span>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-col gap-2">
                       <div 
                         className={`px-4 py-2 rounded-lg max-w-xs sm:max-w-md break-words text-sm ${
                           msg.author.role === "Supreme Leader" 
@@ -218,6 +271,20 @@ export default function ChatPage() {
                       >
                         {parseDiscordMarkdown(msg.content)}
                       </div>
+                      {msg.fileAttachmentIds && msg.fileAttachmentIds.split(",").map((fileId) => (
+                        <div key={fileId} className="flex items-center gap-2">
+                          <a 
+                            href={`/api/files/${fileId}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-500 hover:underline text-sm"
+                            data-testid={`link-file-${fileId}`}
+                          >
+                            <Paperclip className="h-3 w-3 inline mr-1" />
+                            View File
+                          </a>
+                        </div>
+                      ))}
                       {isAdmin && (
                         <Button
                           size="icon"
@@ -250,6 +317,22 @@ export default function ChatPage() {
       </ScrollArea>
 
       <div className="p-4 border-t bg-card">
+        {fileAttachments.length > 0 && (
+          <div className="mb-2 flex flex-wrap gap-2">
+            {fileAttachments.map((file) => (
+              <div key={file.id} className="bg-muted rounded px-2 py-1 flex items-center gap-2 text-sm">
+                <span>{file.filename}</span>
+                <button
+                  onClick={() => removeAttachment(file.id)}
+                  className="text-xs hover:text-destructive"
+                  data-testid={`button-remove-file-${file.id}`}
+                >
+                  ×
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
         <div className="flex gap-2 max-w-4xl mx-auto">
           <Input
             ref={inputRef}
@@ -257,10 +340,26 @@ export default function ChatPage() {
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             onKeyDown={handleKeyDown}
-            disabled={!user || sendMutation.isPending}
+            disabled={!user || sendMutation.isPending || uploadFileMutation.isPending}
             className="flex-1"
             data-testid="input-chat-message"
           />
+          <input
+            ref={fileInputRef}
+            type="file"
+            onChange={handleFileSelect}
+            className="hidden"
+            data-testid="input-file-upload"
+          />
+          <Button
+            size="icon"
+            variant="ghost"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={!user || uploadFileMutation.isPending}
+            data-testid="button-attach-file"
+          >
+            <Paperclip className="h-4 w-4" />
+          </Button>
           <Button 
             onClick={handleSend}
             disabled={!message.trim() || !user || sendMutation.isPending}
