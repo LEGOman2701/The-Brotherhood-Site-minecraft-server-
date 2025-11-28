@@ -3,7 +3,7 @@ services:
     name: brotherhood
     env: node
     plan: free
-    buildCommand: npm ci --include=dev && npm run build
+    buildCommand: npm install && node script/build.js
     startCommand: npm run start
     envVars:
       - key: NODE_ENV
