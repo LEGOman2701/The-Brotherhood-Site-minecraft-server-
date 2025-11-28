@@ -1,0 +1,45 @@
+==> Cloning from https://github.com/LEGOman2701/The-Brotherhood-Site-minecraft-server-
+==> Checking out commit 8b31ee86bf8f6727e961e605cb8a8df17397ddb9 in branch main
+==> Using Node.js version 22.16.0 (default)
+==> Docs on specifying a Node.js version: https://render.com/docs/node-version
+==> Running build command 'bash build.sh'...
+Installing all dependencies including dev...
+added 668 packages, and audited 669 packages in 13s
+75 packages are looking for funding
+  run `npm fund` for details
+9 vulnerabilities (3 low, 5 moderate, 1 high)
+To address issues that do not require attention, run:
+  npm audit fix
+To address all issues (including breaking changes), run:
+  npm audit fix --force
+Run `npm audit` for details.
+Running build with Node directly...
+building client...
+vite v5.4.20 building for production...
+transforming...
+A PostCSS plugin did not pass the `from` option to `postcss.parse`. This may cause imported assets to be incorrectly transformed. If you've recently added a PostCSS plugin that raised this warning, please contact the package author to fix the issue.
+✓ 2048 modules transformed.
+rendering chunks...
+computing gzip size...
+../dist/public/index.html                                    1.29 kB │ gzip:   0.58 kB
+../dist/public/assets/flag png_1764277483845-BEqKnzhS.png   37.60 kB
+../dist/public/assets/index-ChxeRqoN.css                    69.88 kB │ gzip:  11.34 kB
+../dist/public/assets/index-c3sN21fi.js                    540.94 kB │ gzip: 153.07 kB
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 4.45s
+building server...
+  dist/index.cjs  1.1mb ⚠️
+⚡ Done in 205ms
+==> Uploading build...
+==> Uploaded in 6.5s. Compression took 6.0s
+==> Build successful 🎉
+==> Deploying...
+==> Running 'npm run start'
+> rest-express@1.0.0 start
+> NODE_ENV=production node dist/index.cjs
+/opt/render/project/src/dist/index.cjs:78
+==> Exited with status 1
+==> Common ways to troubleshoot your deploy: https://render.com/docs/troubleshooting-deploys
