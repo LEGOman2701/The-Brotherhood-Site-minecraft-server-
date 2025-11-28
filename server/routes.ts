@@ -51,10 +51,31 @@ async function sendDiscordWebhook(webhookUrl: string, content: string, isEmbed?:
       console.error("Discord webhook error:", response.status, response.statusText, "Body:", errorText);
       return null;
     } else {
-      const data = await response.json();
-      console.log("Discord webhook sent successfully");
-      // Return thread ID if it exists (for forum channels)
-      return data.thread_id || null;
+      console.log("Discord webhook sent successfully with status:", response.status);
+      // Handle 204 No Content responses (forum channels often return this)
+      if (response.status === 204) {
+        console.log("Got 204 No Content response - thread created successfully");
+        // Return the thread name as an identifier since we can't get the actual thread ID
+        return threadName || "thread_created";
+      }
+      try {
+        const data = await response.json();
+        console.log("Discord webhook response:", JSON.stringify(data, null, 2));
+        // Return thread ID if it exists (for forum channels)
+        if (data.thread_id) {
+          console.log("Captured thread ID:", data.thread_id);
+          return data.thread_id;
+        }
+        // Fallback to message ID if available
+        if (data.id && threadName) {
+          console.log("Using message ID as thread reference:", data.id);
+          return data.id;
+        }
+        return threadName || null;
+      } catch (parseError) {
+        console.log("Response is not JSON (likely 204 No Content), using thread name as ID:", threadName);
+        return threadName || null;
+      }
     }
   } catch (error) {
     console.error("Failed to send Discord webhook:", error);
@@ -316,11 +337,11 @@ export async function registerRoutes(
             else if (author.role === "The Council of Snow" || author.role === "The Great Hall of the North") emoji = "🟦"; // Blue square
             else if (author.role === "admin") emoji = "🟥"; // Red square
             const threadName = `${emoji} ${author.displayName || "Unknown"} (${author.role || "Member"})`;
-            const threadId = await sendDiscordWebhook(webhookUrl, message, false, threadName);
+            const threadIdentifier = await sendDiscordWebhook(webhookUrl, message, false, threadName);
             
-            // Store the Discord thread ID for future comments
-            if (threadId) {
-              await storage.updatePost(post.id, { discordThreadId: threadId });
+            // Store the thread identifier (either actual thread ID or thread name for matching)
+            if (threadIdentifier) {
+              await storage.updatePost(post.id, { discordThreadId: threadIdentifier });
             }
           }
         }
@@ -404,9 +425,17 @@ export async function registerRoutes(
           const ansiText = `\u001b[2;${colorCode}m${author.displayName || "Unknown"}\u001b[0m - ${comment.content.substring(0, 2000)}`;
           const discordMessage = `\`\`\`ansi\n${ansiText}\n\`\`\``;
           
-          // Send comment to the stored Discord thread ID to avoid creating duplicate threads
+          // Send comment to the Discord thread
+          // discordThreadId could be either an actual thread ID (numeric) or a thread name (string)
           const payload: any = { content: discordMessage };
-          payload.thread_id = post.discordThreadId;
+          
+          // If it looks like a numeric ID, use it as thread_id; otherwise use it as thread_name
+          if (/^\d+$/.test(post.discordThreadId)) {
+            payload.thread_id = post.discordThreadId;
+          } else {
+            // Use thread name to route to the same thread
+            payload.thread_name = post.discordThreadId;
+          }
           
           try {
             const response = await fetch(webhookUrl, {
