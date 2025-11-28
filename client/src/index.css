@@ -452,11 +452,11 @@
 
 /* Animation utility classes */
 .animate-slide-down {
-  animation: slideDownBouncy 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  animation: slideDownBouncy 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
 }
 
 .animate-expand-bounce {
-  animation: expandBounce 1s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  animation: expandBounce 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
 }
 
 .animate-button-press {
@@ -489,15 +489,15 @@
 
 /* Interactive hover animations with smooth transitions */
 button, [role="button"], .interactive-element {
-  transition: all 0.4s ease-out;
+  transition: all 0.2s ease-out;
 }
 
 button:hover:not(:disabled), [role="button"]:hover:not(:disabled) {
-  transform: scale(1.1);
+  transform: scale(1.05);
 }
 
 button:active:not(:disabled), [role="button"]:active:not(:disabled) {
-  transform: scale(0.95);
+  transform: scale(0.97);
 }
 
 /* Disable animations when animations are off */
