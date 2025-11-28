@@ -99,7 +99,7 @@ export default function ChatPage() {
   const uploadFileMutation = useMutation({
     mutationFn: async (file: File) => {
       const reader = new FileReader();
-      return new Promise<void>((resolve, reject) => {
+      return new Promise<any>((resolve, reject) => {
         reader.onload = async () => {
           const base64 = reader.result?.toString().split(",")[1];
           if (!base64) {
@@ -114,9 +114,7 @@ export default function ChatPage() {
               size: file.size,
               data: base64,
             });
-            setFileAttachments(prev => [...prev, uploaded]);
-            toast({ title: "File uploaded successfully" });
-            resolve();
+            resolve(uploaded);
           } catch (err) {
             reject(err);
           }
@@ -124,6 +122,10 @@ export default function ChatPage() {
         reader.onerror = () => reject(reader.error);
         reader.readAsDataURL(file);
       });
+    },
+    onSuccess: (uploaded) => {
+      setFileAttachments(prev => [...prev, uploaded]);
+      toast({ title: "File uploaded successfully" });
     },
     onError: () => {
       toast({ title: "Failed to upload file", variant: "destructive" });
