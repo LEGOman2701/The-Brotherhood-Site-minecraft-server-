@@ -214,7 +214,7 @@ export default function ProfilePage() {
             No posts yet
           </h3>
           <p className="text-sm text-muted-foreground">
-            Share your first post with The Brotherhood!
+            {isOwnProfile ? "Share your first post with The Brotherhood!" : `${displayUser?.displayName} hasn't shared any posts yet.`}
           </p>
         </Card>
       )}
