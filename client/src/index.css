@@ -388,19 +388,13 @@
   }
 }
 
-/* Energetic bounce */
-@keyframes bounce {
-  0%, 100% {
-    transform: translateY(0);
+/* Scale up on hover */
+@keyframes scaleUp {
+  from {
+    transform: scale(1);
   }
-  25% {
-    transform: translateY(-8px);
-  }
-  50% {
-    transform: translateY(0);
-  }
-  75% {
-    transform: translateY(-4px);
+  to {
+    transform: scale(1.1);
   }
 }
 
@@ -475,8 +469,8 @@
   animation: buttonPress 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-.animate-bounce {
-  animation: bounce 0.6s ease-in-out infinite;
+.animate-scale-up {
+  animation: scaleUp 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .animate-pulse-glow {
@@ -505,7 +499,7 @@ button, [role="button"], .interactive-element {
 }
 
 button:hover:not(:disabled), [role="button"]:hover:not(:disabled) {
-  animation: bounce 0.4s ease-in-out;
+  transform: scale(1.1);
 }
 
 button:active:not(:disabled), [role="button"]:active:not(:disabled) {
