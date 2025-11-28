@@ -287,3 +287,117 @@
     inset: -1px;
   }
 }
+
+/* Text Size Classes */
+.text-size-small {
+  font-size: 0.875rem;
+}
+
+.text-size-small h1, .text-size-small h2, .text-size-small h3 {
+  font-size: 1.125rem;
+}
+
+.text-size-large {
+  font-size: 1.125rem;
+}
+
+.text-size-large h1, .text-size-large h2, .text-size-large h3 {
+  font-size: 1.5rem;
+}
+
+/* Compact Mode - Reduce spacing */
+.compact-mode {
+  --compact-spacing: 0.5rem;
+}
+
+.compact-mode .space-y-4 {
+  row-gap: 0.75rem;
+}
+
+.compact-mode .gap-4 {
+  gap: 0.75rem;
+}
+
+.compact-mode .p-4 {
+  padding: 0.75rem;
+}
+
+.compact-mode .p-6 {
+  padding: 1rem;
+}
+
+.compact-mode .pb-3 {
+  padding-bottom: 0.5rem;
+}
+
+.compact-mode .pt-4 {
+  padding-top: 0.75rem;
+}
+
+/* Smooth animations */
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    max-height: 0;
+    overflow: hidden;
+  }
+  to {
+    opacity: 1;
+    max-height: 1000px;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 1;
+    max-height: 1000px;
+  }
+  to {
+    opacity: 0;
+    max-height: 0;
+    overflow: hidden;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes scaleButton {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(0.95);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.animate-slide-down {
+  animation: slideDown 0.3s ease-out forwards;
+}
+
+.animate-slide-up {
+  animation: slideUp 0.3s ease-out forwards;
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.2s ease-out;
+}
+
+.animate-scale-button {
+  animation: scaleButton 0.15s ease-out;
+}
+
+/* Disable animations when animations are off */
+.disable-animations * {
+  animation: none !important;
+  transition: none !important;
+}

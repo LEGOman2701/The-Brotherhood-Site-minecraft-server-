@@ -122,12 +122,12 @@ export const appSettings = pgTable("app_settings", {
 });
 
 // Insert schemas
-export const insertUserSchema = createInsertSchema(users).omit({ createdAt: true });
-export const insertPostSchema = createInsertSchema(posts).omit({ id: true, createdAt: true });
-export const insertCommentSchema = createInsertSchema(comments).omit({ id: true, createdAt: true });
+export const insertUserSchema = createInsertSchema(users).omit({ createdAt: true as const });
+export const insertPostSchema = createInsertSchema(posts).omit({ id: true as const, createdAt: true as const });
+export const insertCommentSchema = createInsertSchema(comments).omit({ id: true as const, createdAt: true as const });
 export const insertLikeSchema = createInsertSchema(likes);
-export const insertChatMessageSchema = createInsertSchema(chatMessages).omit({ id: true, createdAt: true });
-export const insertDirectMessageSchema = createInsertSchema(directMessages).omit({ id: true, createdAt: true });
+export const insertChatMessageSchema = createInsertSchema(chatMessages).omit({ id: true as const, createdAt: true as const });
+export const insertDirectMessageSchema = createInsertSchema(directMessages).omit({ id: true as const, createdAt: true as const });
 export const insertAppSettingSchema = createInsertSchema(appSettings);
 
 // Types

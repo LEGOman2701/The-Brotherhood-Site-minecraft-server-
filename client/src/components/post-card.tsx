@@ -12,6 +12,7 @@ import { useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { parseDiscordMarkdown } from "@/lib/discord-markdown";
+import { usePreferences } from "@/lib/preferences-context";
 import type { PostWithAuthor } from "@shared/schema";
 
 interface PostCardProps {
@@ -21,6 +22,7 @@ interface PostCardProps {
 export function PostCard({ post }: PostCardProps) {
   const { user, isOwner } = useAuth();
   const { toast } = useToast();
+  const { preferences } = usePreferences();
   const [showComments, setShowComments] = useState(false);
   const [commentText, setCommentText] = useState("");
 
@@ -192,7 +194,7 @@ export function PostCard({ post }: PostCardProps) {
           <Button 
             variant="ghost" 
             size="sm" 
-            className="gap-2"
+            className={`gap-2 ${preferences.showAnimations ? "active-elevate-2" : ""}`}
             onClick={handleLike}
             disabled={!user || likeMutation.isPending}
             data-testid={`button-like-${post.id}`}
@@ -206,7 +208,7 @@ export function PostCard({ post }: PostCardProps) {
           <Button 
             variant="ghost" 
             size="sm" 
-            className="gap-2"
+            className={`gap-2 ${preferences.showAnimations ? "active-elevate-2" : ""}`}
             onClick={() => setShowComments(!showComments)}
             data-testid={`button-comments-${post.id}`}
           >
@@ -217,7 +219,7 @@ export function PostCard({ post }: PostCardProps) {
         </div>
 
         {showComments && (
-          <div className="w-full space-y-3 border-t pt-4">
+          <div className={`w-full space-y-3 border-t pt-4 ${preferences.showAnimations ? "animate-slide-down" : ""}`}>
             {user && (
               <div className="flex gap-2">
                 <Textarea

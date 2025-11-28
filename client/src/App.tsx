@@ -6,7 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/theme-provider";
 import { AuthProvider, useAuth } from "@/lib/auth-context";
 import { SearchProvider } from "@/lib/search-context";
-import { PreferencesProvider } from "@/lib/preferences-context";
+import { PreferencesProvider, usePreferences } from "@/lib/preferences-context";
 import { Header } from "@/components/header";
 import LoginPage from "@/pages/login";
 import FeedPage from "@/pages/feed";
@@ -94,6 +94,22 @@ function Router() {
   );
 }
 
+function AppWithPreferences() {
+  const { preferences } = usePreferences();
+  
+  return (
+    <div className={`
+      ${preferences.textSize === "small" ? "text-size-small" : ""}
+      ${preferences.textSize === "large" ? "text-size-large" : ""}
+      ${preferences.compactMode ? "compact-mode" : ""}
+      ${!preferences.showAnimations ? "disable-animations" : ""}
+    `}>
+      <Router />
+      <Toaster />
+    </div>
+  );
+}
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
@@ -102,8 +118,7 @@ function App() {
           <AuthProvider>
             <SearchProvider>
               <PreferencesProvider>
-                <Router />
-                <Toaster />
+                <AppWithPreferences />
               </PreferencesProvider>
             </SearchProvider>
           </AuthProvider>
