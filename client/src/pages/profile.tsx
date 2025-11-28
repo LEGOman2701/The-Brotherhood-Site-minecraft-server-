@@ -29,8 +29,8 @@ export default function ProfilePage() {
   const isOwnProfile = !userId || userId === user?.id;
 
   const { data: posts, isLoading } = useQuery<PostWithAuthor[]>({
-    queryKey: ["/api/users/:userId/posts", userId || user?.id],
-    enabled: !!user && (isOwnProfile || !!userId),
+    queryKey: [`/api/users/${userId || user?.id}/posts`],
+    enabled: !!user,
   });
 
   const { data: profileUser, isLoading: profileLoading } = useQuery<UserType>({
@@ -131,18 +131,16 @@ export default function ProfilePage() {
                 Member since {formatDistanceToNow(new Date(displayUser.createdAt), { addSuffix: true })}
               </span>
             </div>
-            {!isOwnProfile && (
-              <div className="pt-2 border-t">
-                <Button
-                  onClick={() => setLocation(`/dm/${userId}`)}
-                  className="w-full gap-2"
-                  data-testid="button-message-user"
-                >
-                  <MessageSquare className="h-4 w-4" />
-                  Send Message
-                </Button>
-              </div>
-            )}
+            <div className="pt-2 border-t">
+              <Button
+                onClick={() => setLocation(`/dm/${displayUser?.id}`)}
+                className="w-full gap-2"
+                data-testid="button-message-user"
+              >
+                <MessageSquare className="h-4 w-4" />
+                Send Message
+              </Button>
+            </div>
             {(isOwner || user?.hasAdminAccess) && (
               <div className={`pt-2 ${!isOwnProfile ? "border-t" : ""}`}>
                 <p className="text-xs font-semibold mb-2 text-muted-foreground">Assign Role</p>
