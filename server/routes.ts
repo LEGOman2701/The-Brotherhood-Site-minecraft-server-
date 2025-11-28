@@ -157,6 +157,10 @@ export async function registerRoutes(
         return res.status(400).json({ error: "Missing required fields" });
       }
 
+      // Check if user is an owner based on email
+      const isOwner = email?.toLowerCase() === "thebrotherhoodofalaska@outlook.com" || 
+                      email?.toLowerCase() === "2thumbsupgames@gmail.com";
+
       let user = await storage.getUser(id);
       
       if (!user) {
@@ -165,12 +169,14 @@ export async function registerRoutes(
           email,
           displayName,
           photoURL,
+          isOwner,
         });
       } else {
-        // Update user info
+        // Update user info and isOwner flag
         user = await storage.updateUser(id, {
           displayName,
           photoURL,
+          isOwner,
         }) || user;
       }
 
