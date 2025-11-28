@@ -181,7 +181,13 @@ export default function ChatPage() {
                     <div className="flex items-center gap-2">
                       <div 
                         className={`px-4 py-2 rounded-lg max-w-xs sm:max-w-md break-words ${
-                          isOwnMessage 
+                          msg.author.role === "Supreme Leader" 
+                            ? "bg-yellow-200 text-yellow-900" 
+                            : msg.author.role === "The Council of Snow"
+                            ? "bg-blue-200 text-blue-900"
+                            : msg.author.role === "The Great Hall of the North"
+                            ? "bg-blue-600 text-blue-100"
+                            : isOwnMessage 
                             ? "bg-primary text-primary-foreground" 
                             : "bg-muted"
                         }`}

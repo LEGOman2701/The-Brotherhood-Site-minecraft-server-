@@ -143,7 +143,7 @@ export function PostCard({ post }: PostCardProps) {
         )}
       </CardHeader>
 
-      <CardContent className="pb-3">
+      <CardContent className={`pb-3 ${post.author.role === "Supreme Leader" ? "bg-yellow-200" : post.author.role === "The Council of Snow" ? "bg-blue-200" : post.author.role === "The Great Hall of the North" ? "bg-blue-600" : ""}`}>
         <p className="text-sm whitespace-pre-wrap" data-testid={`text-content-${post.id}`}>
           {post.content}
         </p>
