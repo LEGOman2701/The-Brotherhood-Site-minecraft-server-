@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
-import { Heart, MessageCircle, ChevronDown, ChevronUp, Send, Trash2 } from "lucide-react";
+import { Heart, MessageCircle, ChevronDown, ChevronUp, Send, Trash2, Paperclip } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { useAuth } from "@/lib/auth-context";
 import { Link } from "wouter";
@@ -187,6 +187,23 @@ export function PostCard({ post }: PostCardProps) {
         <div className="text-sm whitespace-pre-wrap" data-testid={`text-content-${post.id}`}>
           {parseDiscordMarkdown(post.content)}
         </div>
+        {post.fileAttachmentIds && (
+          <div className="mt-3 flex flex-wrap gap-2">
+            {post.fileAttachmentIds.split(",").map((fileId) => (
+              <a 
+                key={fileId} 
+                href={`/api/files/${fileId.trim()}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-blue-500 hover:underline text-sm"
+                data-testid={`link-post-file-${fileId}`}
+              >
+                <Paperclip className="h-3 w-3" />
+                View File
+              </a>
+            ))}
+          </div>
+        )}
       </CardContent>
 
       <CardFooter className="flex flex-col gap-4 pt-0">
