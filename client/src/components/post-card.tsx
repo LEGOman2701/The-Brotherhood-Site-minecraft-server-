@@ -93,7 +93,7 @@ export function PostCard({ post }: PostCardProps) {
   const canDelete = isOwner || post.authorId === user?.id;
 
   return (
-    <Card className={`overflow-visible ${post.author.role === "Supreme Leader" ? "bg-yellow-50" : post.author.role === "The Council of Snow" ? "bg-blue-50" : post.author.role === "The Great Hall of the North" ? "bg-blue-50" : ""}`} data-testid={`card-post-${post.id}`}>
+    <Card className={`overflow-visible ${post.author.role === "Supreme Leader" ? "bg-yellow-50" : post.author.role === "The Council of Snow" ? "bg-blue-50" : post.author.role === "The Great Hall of the North" ? "bg-blue-50" : post.author.role === "admin" ? "bg-red-50" : ""}`} data-testid={`card-post-${post.id}`}>
       <CardHeader className="flex flex-row items-start justify-between gap-4 space-y-0 pb-3">
         <div className="flex items-center gap-3">
           <Link href={`/profile/${post.author.id}`}>
@@ -120,7 +120,7 @@ export function PostCard({ post }: PostCardProps) {
                 </Badge>
               )}
               {post.author.role && (
-                <Badge className={`text-xs ${post.author.role === "Supreme Leader" ? "bg-yellow-500 text-yellow-900" : post.author.role === "The Council of Snow" ? "bg-blue-300 text-blue-900" : "bg-blue-900 text-blue-100"}`}>
+                <Badge className={`text-xs ${post.author.role === "Supreme Leader" ? "bg-yellow-500 text-yellow-900" : post.author.role === "The Council of Snow" ? "bg-blue-300 text-blue-900" : post.author.role === "The Great Hall of the North" ? "bg-blue-900 text-blue-100" : post.author.role === "admin" ? "bg-red-500 text-red-900" : ""}`}>
                   {post.author.role}
                 </Badge>
               )}

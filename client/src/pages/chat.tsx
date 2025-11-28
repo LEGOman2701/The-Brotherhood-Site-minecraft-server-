@@ -177,7 +177,7 @@ export default function ChatPage() {
                     <div className="flex items-center gap-2 mb-1 flex-wrap">
                       <span className="text-sm font-medium">{msg.author.displayName}</span>
                       {msg.author.role && (
-                        <span className={`text-xs px-1.5 py-0.5 rounded ${msg.author.role === "Supreme Leader" ? "bg-yellow-500 text-yellow-900" : msg.author.role === "The Council of Snow" ? "bg-blue-300 text-blue-900" : "bg-blue-900 text-blue-100"}`}>
+                        <span className={`text-xs px-1.5 py-0.5 rounded ${msg.author.role === "Supreme Leader" ? "bg-yellow-500 text-yellow-900" : msg.author.role === "The Council of Snow" ? "bg-blue-300 text-blue-900" : msg.author.role === "The Great Hall of the North" ? "bg-blue-900 text-blue-100" : msg.author.role === "admin" ? "bg-red-500 text-red-900" : ""}`}>
                           {msg.author.role}
                         </span>
                       )}
@@ -194,6 +194,8 @@ export default function ChatPage() {
                             ? "bg-blue-50 text-blue-900"
                             : msg.author.role === "The Great Hall of the North"
                             ? "bg-blue-50 text-blue-900"
+                            : msg.author.role === "admin"
+                            ? "bg-red-50 text-red-900"
                             : isOwnMessage 
                             ? "bg-primary text-primary-foreground" 
                             : "bg-muted"

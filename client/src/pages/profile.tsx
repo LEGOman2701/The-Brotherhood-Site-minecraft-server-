@@ -17,6 +17,7 @@ const ROLES = [
   { id: "Supreme Leader", label: "Supreme Leader", color: "bg-yellow-500" },
   { id: "The Council of Snow", label: "The Council of Snow", color: "bg-blue-300" },
   { id: "The Great Hall of the North", label: "The Great Hall of the North", color: "bg-blue-900" },
+  { id: "admin", label: "Admin", color: "bg-red-500" },
 ];
 
 export default function ProfilePage() {
