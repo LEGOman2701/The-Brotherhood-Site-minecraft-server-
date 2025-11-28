@@ -40,13 +40,17 @@ async function sendDiscordWebhook(webhookUrl: string, content: string, isEmbed?:
     if (threadName) {
       payload.thread_name = threadName;
     }
+    console.log("Sending webhook payload:", JSON.stringify(payload, null, 2));
     const response = await fetch(webhookUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
     if (!response.ok) {
-      console.error("Discord webhook error:", response.status, response.statusText);
+      const errorText = await response.text();
+      console.error("Discord webhook error:", response.status, response.statusText, "Body:", errorText);
+    } else {
+      console.log("Discord webhook sent successfully");
     }
   } catch (error) {
     console.error("Failed to send Discord webhook:", error);
@@ -300,15 +304,10 @@ export async function registerRoutes(
             };
             await sendDiscordWebhook(webhookUrl, JSON.stringify(embed), true);
           } else {
-            // Feed posts use embeds with colored name + role in title
+            // Feed posts use simple text format
             const roleDisplay = author.role || "Member";
-            const embed = {
-              title: `${author.displayName || "Unknown"} (${roleDisplay})`,
-              description: post.content.substring(0, 2000),
-              color: getRoleColor(author.role),
-              timestamp: post.createdAt?.toISOString(),
-            };
-            await sendDiscordWebhook(webhookUrl, JSON.stringify(embed), true);
+            const message = `**${author.displayName || "Unknown"} (${roleDisplay})**\n${post.content.substring(0, 2000)}`;
+            await sendDiscordWebhook(webhookUrl, message, false);
           }
         }
       }
