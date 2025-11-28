@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Settings, Key, Save, Loader2, CheckCircle, AlertCircle, Sliders, MessageSquare } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { useLocation } from "wouter";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useTheme } from "@/components/theme-provider";
@@ -83,6 +83,7 @@ export default function SettingsPage() {
     },
     onSuccess: () => {
       toast({ title: "Discord webhooks updated successfully!" });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/webhooks"] });
     },
     onError: () => {
       toast({ title: "Failed to update webhooks", variant: "destructive" });
