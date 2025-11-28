@@ -147,7 +147,7 @@ export const insertPostSchema = createInsertSchema(posts).omit({ id: true as con
 export const insertCommentSchema = createInsertSchema(comments).omit({ id: true as const, createdAt: true as const });
 export const insertLikeSchema = createInsertSchema(likes);
 export const insertFileAttachmentSchema = createInsertSchema(fileAttachments).omit({ id: true as const, createdAt: true as const });
-export const insertChatMessageSchema = createInsertSchema(chatMessages).omit({ id: true as const, createdAt: true as const }).extend({ fileAttachmentIds: z.string().optional() });
+export const insertChatMessageSchema = createInsertSchema(chatMessages).omit({ id: true as const, createdAt: true as const });
 export const insertDirectMessageSchema = createInsertSchema(directMessages).omit({ id: true as const, createdAt: true as const });
 export const insertAppSettingSchema = createInsertSchema(appSettings);
 
