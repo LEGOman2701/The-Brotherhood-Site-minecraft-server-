@@ -7,14 +7,14 @@ import { storage } from "./storage";
 import { verifyIdToken, isFirebaseAdminInitialized } from "./firebase-admin";
 import bcrypt from "bcrypt";
 
-// Role to Discord color mapping
-function getRoleColor(role?: string | null): number {
+// Role to Discord ANSI color mapping
+function getRoleAnsiColor(role?: string | null): string {
   switch (role) {
-    case "Supreme Leader": return 16776960; // Yellow
-    case "The Council of Snow": return 3381759; // Light Blue
-    case "The Great Hall of the North": return 25600; // Dark Blue
-    case "admin": return 16711680; // Red
-    default: return 3447003; // Default blue
+    case "Supreme Leader": return "33"; // Yellow
+    case "The Council of Snow": return "34"; // Blue
+    case "The Great Hall of the North": return "34"; // Blue
+    case "admin": return "31"; // Red
+    default: return "37"; // White/Default
   }
 }
 
@@ -283,9 +283,11 @@ export async function registerRoutes(
             };
             await sendDiscordWebhook(webhookUrl, JSON.stringify(embed), true);
           } else {
-            // Feed posts use simple text format
-            const message = `**${author.displayName || "Unknown"}**: ${post.content.substring(0, 2000)}`;
-            await sendDiscordWebhook(webhookUrl, message, false);
+            // Feed posts use ANSI colored text format
+            const colorCode = getRoleAnsiColor(author.role);
+            const ansiText = `[2;${colorCode}m${author.displayName || "Unknown"}[0m: ${post.content.substring(0, 2000)}`;
+            const discordMessage = `\`\`\`ansi\n${ansiText}\n\`\`\``;
+            await sendDiscordWebhook(webhookUrl, discordMessage, false);
           }
         }
       }
@@ -483,15 +485,11 @@ export async function registerRoutes(
       const webhookUrl = await storage.getSetting("discord_chat_webhook");
       
       if (webhookUrl && author) {
-        // Chat webhook uses colored text format: (username) - (message)
-        const roleColor = getRoleColor(author.role);
-        const hexColor = roleColor.toString(16).padStart(6, '0');
-        const embed = {
-          description: `**${author.displayName || "Unknown"}** - ${message.content.substring(0, 2000)}`,
-          color: roleColor,
-          timestamp: message.createdAt?.toISOString(),
-        };
-        await sendDiscordWebhook(webhookUrl, embed);
+        // Chat webhook uses ANSI colored text format
+        const colorCode = getRoleAnsiColor(author.role);
+        const ansiText = `[2;${colorCode}m${author.displayName || "Unknown"}[0m - ${message.content.substring(0, 2000)}`;
+        const discordMessage = `\`\`\`ansi\n${ansiText}\n\`\`\``;
+        await sendDiscordWebhook(webhookUrl, discordMessage, false);
       }
 
       // Broadcast to all WebSocket clients
