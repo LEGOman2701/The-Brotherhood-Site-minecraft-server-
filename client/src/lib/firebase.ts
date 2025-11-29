@@ -1,6 +1,6 @@
 // Firebase authentication setup for The Brotherhood
 import { initializeApp } from "firebase/app";
-import { getAuth, signInWithPopup, GoogleAuthProvider, OAuthProvider, signOut, onAuthStateChanged, type User as FirebaseUser } from "firebase/auth";
+import { getAuth, signInWithPopup, GoogleAuthProvider, OAuthProvider, signOut, onAuthStateChanged, signInWithEmailLink, isSignInWithEmailLink, getRedirectResult, type User as FirebaseUser } from "firebase/auth";
 
 // In development mode, always use test auth (skip Firebase popup issues)
 const isDev = import.meta.env.DEV;
@@ -66,6 +66,42 @@ export async function signInWithMicrosoft() {
   
   if (!auth) throw new Error("Firebase not configured");
   return signInWithPopup(auth, microsoftProvider);
+}
+
+export async function signInWithEmail(email: string) {
+  if (isDev) {
+    // In development, use test user with the provided email
+    console.log("Using test user with email:", email);
+    const testUser = {
+      uid: "test-user-email",
+      email: email,
+      displayName: email.split("@")[0],
+      photoURL: null,
+      getIdToken: async () => "test-token-dev"
+    } as any;
+    sessionStorage.setItem("devUser", JSON.stringify(testUser));
+    setTimeout(() => {
+      window.dispatchEvent(new CustomEvent("devAuthChange", { detail: testUser }));
+    }, 0);
+    return { user: testUser };
+  }
+  
+  if (!auth) throw new Error("Firebase not configured");
+  
+  const actionCodeSettings = {
+    url: window.location.origin + '/login?email=' + encodeURIComponent(email),
+    handleCodeInApp: true,
+  };
+  
+  await signInWithEmailLink(auth, email, actionCodeSettings);
+  // Store email in session for verification
+  window.sessionStorage.setItem('emailForSignIn', email);
+}
+
+export function checkEmailLinkSignIn() {
+  if (isDev) return false;
+  if (!auth) return false;
+  return isSignInWithEmailLink(auth, window.location.href);
 }
 
 export async function logOut() {
