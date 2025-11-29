@@ -15,6 +15,7 @@ import ChatPage from "@/pages/chat";
 import DMPage from "@/pages/dm";
 import SettingsPage from "@/pages/settings";
 import ProfilePage from "@/pages/profile";
+import InventoryPage from "@/pages/inventory";
 import NotFound from "@/pages/not-found";
 
 // Suppress Vite HMR connection errors in development
@@ -78,12 +79,17 @@ function ProtectedProfile() {
   return <ProtectedRoute component={ProfilePage} />;
 }
 
+function ProtectedInventory() {
+  return <ProtectedRoute component={InventoryPage} />;
+}
+
 function Router() {
   return (
     <Switch>
       <Route path="/login" component={LoginPage} />
       <Route path="/admin" component={ProtectedAdmin} />
       <Route path="/chat" component={ProtectedChat} />
+      <Route path="/inventory" component={ProtectedInventory} />
       <Route path="/dm/:userId" component={ProtectedDM} />
       <Route path="/settings" component={ProtectedSettings} />
       <Route path="/profile/:userId" component={ProtectedProfile} />

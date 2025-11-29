@@ -144,6 +144,35 @@ export const appSettings = pgTable("app_settings", {
   value: text("value").notNull(),
 });
 
+// Minecraft players table
+export const minecraftPlayers = pgTable("minecraft_players", {
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  playerName: varchar("player_name", { length: 255 }).notNull().unique(),
+  uuid: varchar("uuid", { length: 36 }).notNull().unique(),
+  lastSeen: timestamp("last_seen").defaultNow().notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Minecraft inventory items table
+export const minecraftInventoryItems = pgTable("minecraft_inventory_items", {
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  playerId: integer("player_id").notNull().references(() => minecraftPlayers.id, { onDelete: "cascade" }),
+  itemName: varchar("item_name", { length: 255 }).notNull(),
+  quantity: integer("quantity").notNull().default(0),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const minecraftPlayersRelations = relations(minecraftPlayers, ({ many }) => ({
+  inventoryItems: many(minecraftInventoryItems),
+}));
+
+export const minecraftInventoryItemsRelations = relations(minecraftInventoryItems, ({ one }) => ({
+  player: one(minecraftPlayers, {
+    fields: [minecraftInventoryItems.playerId],
+    references: [minecraftPlayers.id],
+  }),
+}));
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).omit({ createdAt: true });
 export const insertPostSchema = createInsertSchema(posts).omit({ id: true, createdAt: true });
@@ -153,6 +182,8 @@ export const insertFileAttachmentSchema = createInsertSchema(fileAttachments).om
 export const insertChatMessageSchema = createInsertSchema(chatMessages).omit({ id: true, createdAt: true });
 export const insertDirectMessageSchema = createInsertSchema(directMessages).omit({ id: true, createdAt: true });
 export const insertAppSettingSchema = createInsertSchema(appSettings);
+export const insertMinecraftPlayerSchema = createInsertSchema(minecraftPlayers).omit({ id: true, createdAt: true });
+export const insertMinecraftInventoryItemSchema = createInsertSchema(minecraftInventoryItems).omit({ id: true, updatedAt: true });
 
 // Types
 export type User = typeof users.$inferSelect;
@@ -171,6 +202,10 @@ export type DirectMessage = typeof directMessages.$inferSelect;
 export type InsertDirectMessage = z.infer<typeof insertDirectMessageSchema>;
 export type AppSetting = typeof appSettings.$inferSelect;
 export type InsertAppSetting = z.infer<typeof insertAppSettingSchema>;
+export type MinecraftPlayer = typeof minecraftPlayers.$inferSelect;
+export type InsertMinecraftPlayer = z.infer<typeof insertMinecraftPlayerSchema>;
+export type MinecraftInventoryItem = typeof minecraftInventoryItems.$inferSelect;
+export type InsertMinecraftInventoryItem = z.infer<typeof insertMinecraftInventoryItemSchema>;
 
 // Extended types for frontend with relations
 export type PostWithAuthor = Post & { 
@@ -184,3 +219,10 @@ export type PostWithAuthor = Post & {
 
 export type ChatMessageWithAuthor = ChatMessage & { author: User };
 export type DirectMessageWithAuthor = DirectMessage & { sender: User; recipient: User };
+export type MinecraftPlayerWithInventory = MinecraftPlayer & {
+  inventoryItems: MinecraftInventoryItem[];
+};
+export type ItemTotal = {
+  itemName: string;
+  totalQuantity: number;
+};

@@ -22,6 +22,8 @@ export function Header() {
   const [location, setLocation] = useLocation();
   const { searchQuery, setSearchQuery } = useSearch();
 
+  const isAdmin = isOwner || user?.hasAdminAccess || user?.role === "Supreme Leader";
+
   const handleLogout = async () => {
     try {
       await logOut();
@@ -86,6 +88,17 @@ export function Header() {
                 Chat
               </Button>
             </Link>
+            {isAdmin && (
+              <Link href="/inventory">
+                <Button 
+                  variant={location === "/inventory" ? "secondary" : "ghost"} 
+                  size="sm"
+                  data-testid="link-inventory"
+                >
+                  Inventory
+                </Button>
+              </Link>
+            )}
           </nav>
 
           <div className="hidden md:flex items-center gap-2 flex-1 max-w-md ml-4 rounded-md px-3 py-1.5 bg-muted/50 border border-muted hover:bg-muted/70 transition-colors">

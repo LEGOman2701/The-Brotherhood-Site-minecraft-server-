@@ -868,5 +868,77 @@ export async function registerRoutes(
     }
   }, 60 * 60 * 1000);
 
+  // Get all Minecraft players and their inventories
+  app.get("/api/minecraft/players", authMiddleware, async (req, res) => {
+    try {
+      const userId = req.userId!;
+      const user = await storage.getUser(userId);
+      if (!user || (!user.isOwner && !user.hasAdminAccess && user.role !== "Supreme Leader")) {
+        return res.status(403).json({ error: "Admin access required" });
+      }
+      const players = await storage.getMinecraftPlayers();
+      res.json(players);
+    } catch (error) {
+      console.error("Get players error:", error);
+      res.status(500).json({ error: "Failed to fetch players" });
+    }
+  });
+
+  // Get item totals
+  app.get("/api/minecraft/item-totals", authMiddleware, async (req, res) => {
+    try {
+      const userId = req.userId!;
+      const user = await storage.getUser(userId);
+      if (!user || (!user.isOwner && !user.hasAdminAccess && user.role !== "Supreme Leader")) {
+        return res.status(403).json({ error: "Admin access required" });
+      }
+      const totals = await storage.getItemTotals();
+      res.json(totals);
+    } catch (error) {
+      console.error("Get item totals error:", error);
+      res.status(500).json({ error: "Failed to fetch item totals" });
+    }
+  });
+
+  // Upsert player (for plugin to send data)
+  app.post("/api/minecraft/players", authMiddleware, async (req, res) => {
+    try {
+      const userId = req.userId!;
+      const user = await storage.getUser(userId);
+      if (!user || (!user.isOwner && !user.hasAdminAccess && user.role !== "Supreme Leader")) {
+        return res.status(403).json({ error: "Admin access required" });
+      }
+      const { playerName, uuid } = req.body;
+      if (!playerName || !uuid) {
+        return res.status(400).json({ error: "Missing playerName or uuid" });
+      }
+      const player = await storage.upsertMinecraftPlayer({ playerName, uuid });
+      res.json(player);
+    } catch (error) {
+      console.error("Upsert player error:", error);
+      res.status(500).json({ error: "Failed to upsert player" });
+    }
+  });
+
+  // Upsert inventory item (for plugin to send data)
+  app.post("/api/minecraft/inventory", authMiddleware, async (req, res) => {
+    try {
+      const userId = req.userId!;
+      const user = await storage.getUser(userId);
+      if (!user || (!user.isOwner && !user.hasAdminAccess && user.role !== "Supreme Leader")) {
+        return res.status(403).json({ error: "Admin access required" });
+      }
+      const { playerId, itemName, quantity } = req.body;
+      if (!playerId || !itemName || quantity === undefined) {
+        return res.status(400).json({ error: "Missing required fields" });
+      }
+      const item = await storage.upsertInventoryItem({ playerId, itemName, quantity });
+      res.json(item);
+    } catch (error) {
+      console.error("Upsert inventory error:", error);
+      res.status(500).json({ error: "Failed to upsert inventory" });
+    }
+  });
+
   return httpServer;
 }

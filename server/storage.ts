@@ -2,6 +2,7 @@
 // Reference: javascript_database blueprint
 import { 
   users, posts, comments, likes, chatMessages, directMessages, appSettings, fileAttachments,
+  minecraftPlayers, minecraftInventoryItems,
   type User, type InsertUser,
   type Post, type InsertPost,
   type Comment, type InsertComment,
@@ -10,6 +11,9 @@ import {
   type DirectMessage, type InsertDirectMessage,
   type AppSetting, type InsertAppSetting,
   type FileAttachment, type InsertFileAttachment,
+  type MinecraftPlayer, type InsertMinecraftPlayer,
+  type MinecraftInventoryItem, type InsertMinecraftInventoryItem,
+  type MinecraftPlayerWithInventory, type ItemTotal,
   type PostWithAuthor, type ChatMessageWithAuthor, type DirectMessageWithAuthor
 } from "@shared/schema";
 import { db } from "./db";
@@ -60,6 +64,13 @@ export interface IStorage {
   getFile(id: number): Promise<FileAttachment | undefined>;
   deleteFile(id: number): Promise<void>;
   deleteExpiredFiles(): Promise<void>;
+
+  // Minecraft Inventory
+  getMinecraftPlayers(): Promise<MinecraftPlayerWithInventory[]>;
+  getMinecraftPlayer(id: number): Promise<MinecraftPlayerWithInventory | undefined>;
+  upsertMinecraftPlayer(player: InsertMinecraftPlayer): Promise<MinecraftPlayer>;
+  upsertInventoryItem(item: InsertMinecraftInventoryItem): Promise<MinecraftInventoryItem>;
+  getItemTotals(): Promise<ItemTotal[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -374,6 +385,62 @@ export class DatabaseStorage implements IStorage {
 
   async deleteExpiredFiles(): Promise<void> {
     await db.delete(fileAttachments).where(sql`${fileAttachments.expiresAt} <= NOW()`);
+  }
+
+  // Minecraft Inventory
+  async getMinecraftPlayers(): Promise<MinecraftPlayerWithInventory[]> {
+    const players = await db.select().from(minecraftPlayers).orderBy(desc(minecraftPlayers.lastSeen));
+    const result = await Promise.all(
+      players.map(async (player) => {
+        const items = await db.select().from(minecraftInventoryItems).where(eq(minecraftInventoryItems.playerId, player.id));
+        return { ...player, inventoryItems: items };
+      })
+    );
+    return result;
+  }
+
+  async getMinecraftPlayer(id: number): Promise<MinecraftPlayerWithInventory | undefined> {
+    const [player] = await db.select().from(minecraftPlayers).where(eq(minecraftPlayers.id, id));
+    if (!player) return undefined;
+    const items = await db.select().from(minecraftInventoryItems).where(eq(minecraftInventoryItems.playerId, id));
+    return { ...player, inventoryItems: items };
+  }
+
+  async upsertMinecraftPlayer(playerData: InsertMinecraftPlayer): Promise<MinecraftPlayer> {
+    const [player] = await db
+      .insert(minecraftPlayers)
+      .values(playerData)
+      .onConflictDoUpdate({
+        target: minecraftPlayers.uuid,
+        set: { lastSeen: new Date() }
+      })
+      .returning();
+    return player;
+  }
+
+  async upsertInventoryItem(itemData: InsertMinecraftInventoryItem): Promise<MinecraftInventoryItem> {
+    const [item] = await db
+      .insert(minecraftInventoryItems)
+      .values(itemData)
+      .onConflictDoUpdate({
+        target: [minecraftInventoryItems.playerId, minecraftInventoryItems.itemName],
+        set: { quantity: itemData.quantity, updatedAt: new Date() }
+      })
+      .returning();
+    return item;
+  }
+
+  async getItemTotals(): Promise<ItemTotal[]> {
+    const results = await db
+      .select({
+        itemName: minecraftInventoryItems.itemName,
+        totalQuantity: sql<number>`SUM(${minecraftInventoryItems.quantity})`.as('totalQuantity')
+      })
+      .from(minecraftInventoryItems)
+      .groupBy(minecraftInventoryItems.itemName)
+      .orderBy(desc(sql`SUM(${minecraftInventoryItems.quantity})`));
+    
+    return results as ItemTotal[];
   }
 }
 
